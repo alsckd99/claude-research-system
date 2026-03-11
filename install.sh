@@ -75,11 +75,13 @@ fi
 # ──────────────────────────────────────────
 echo ""
 echo "[3/3] Brave Search API Key (optional — for web/leaderboard search)"
+echo "  brave.com/search/api -> Search -> Get started"
+echo "  Free tier: 1,000 requests/month at no cost."
+echo "  Paper search works without this — Semantic Scholar + arXiv are always available."
 
 if [ -n "${BRAVE_API_KEY:-}" ]; then
   echo "already set"
 else
-  echo "brave.com/search/api — paper search works without this (Semantic Scholar + arXiv always available)"
   echo ""
   read -rp "Brave Search API Key (Enter to skip): " BRAVE_API_KEY
   if [ -n "${BRAVE_API_KEY}" ]; then
