@@ -30,11 +30,12 @@ echo ""
 # 1. Anthropic API Key
 # ──────────────────────────────────────────
 echo "[1/3] Anthropic API Key"
+echo "  Only needed for background automation (orchestrator/main.py running without Claude Code)."
+echo "  If you are using Claude Code directly, skip this — Claude Code is already connected."
 
 if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
   echo "already set"
 else
-  echo "Get your key at https://console.anthropic.com -> API Keys"
   echo ""
   read -rp "Anthropic API Key (sk-ant-..., Enter to skip): " ANTHROPIC_API_KEY
   if [ -n "${ANTHROPIC_API_KEY}" ]; then
@@ -42,7 +43,7 @@ else
     export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}"
     echo "saved to ~/.bashrc"
   else
-    echo "skipped — set later: export ANTHROPIC_API_KEY='sk-ant-...'"
+    echo "skipped"
   fi
 fi
 
@@ -51,11 +52,13 @@ fi
 # ──────────────────────────────────────────
 echo ""
 echo "[2/3] GitHub Token (optional — for PR/issue management)"
+echo "  github.com -> Settings -> Developer settings -> Personal access tokens"
+echo "  -> Tokens (classic)  [use classic, not fine-grained]"
+echo "  -> Generate new token (classic) -> check 'repo' -> copy ghp_..."
 
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   echo "already set"
 else
-  echo "github.com -> Settings -> Developer settings -> Personal access tokens (scopes: repo)"
   echo ""
   read -rp "GitHub Token (ghp_..., Enter to skip): " GITHUB_TOKEN
   if [ -n "${GITHUB_TOKEN}" ]; then
