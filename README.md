@@ -7,16 +7,14 @@ Literature search, experiment running, failure analysis, and policy evolution â€
 
 ## Install
 
-Inside Claude Code:
-```
-/plugin marketplace add alsckd99/claude-research-system
-/plugin install claude-research-system
+Clone once, then run for each project you want to use it on:
+
+```bash
+git clone https://github.com/alsckd99/claude-research-system ~/claude-research-system
+bash ~/claude-research-system/install.sh /path/to/your/project
 ```
 
-Then run once for API keys and Python packages:
-```bash
-bash ~/.claude/plugins/claude-research-system/install.sh
-```
+This writes agents/skills/hooks only into `your-project/.claude/` â€” other projects and `~/.claude/` are not touched.
 
 ---
 

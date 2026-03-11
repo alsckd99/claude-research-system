@@ -1,9 +1,30 @@
 #!/usr/bin/env bash
-# research-os first-time setup
-# Run once after: claude plugin install <path-or-url>
-# Sets API keys and installs required Python packages.
+# claude-research-system: project-scoped install
+# Usage: bash install.sh /path/to/your/project
+#
+# Copies agents/skills/hooks into that project's .claude/ only.
+# Nothing is written to ~/.claude/ — other projects are not affected.
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${1:-}"
+
+if [ -z "${PROJECT_DIR}" ]; then
+  echo "Usage: bash install.sh /path/to/your/project"
+  echo ""
+  echo "Example:"
+  echo "  bash install.sh ~/projects/my-research"
+  exit 1
+fi
+
+PROJECT_DIR="$(mkdir -p "${PROJECT_DIR}" && cd "${PROJECT_DIR}" && pwd)"
+CLAUDE_DIR="${PROJECT_DIR}/.claude"
+
+echo ""
+echo "claude-research-system install"
+echo "project: ${PROJECT_DIR}"
+echo ""
 
 # ──────────────────────────────────────────
 # 1. Anthropic API Key
@@ -68,22 +89,111 @@ else
 fi
 
 # ──────────────────────────────────────────
-# 4. Python packages
+# 4. Copy plugin files into project .claude/
+# ──────────────────────────────────────────
+echo ""
+echo "copying files to ${CLAUDE_DIR} ..."
+
+mkdir -p "${CLAUDE_DIR}/agents"
+mkdir -p "${CLAUDE_DIR}/skills/bootstrap-project"
+mkdir -p "${CLAUDE_DIR}/skills/literature-scout"
+mkdir -p "${CLAUDE_DIR}/skills/experiment-runner"
+mkdir -p "${CLAUDE_DIR}/skills/result-analyzer"
+mkdir -p "${CLAUDE_DIR}/skills/method-reviser"
+mkdir -p "${CLAUDE_DIR}/skills/policy-evolver"
+mkdir -p "${CLAUDE_DIR}/hooks"
+
+cp "${SCRIPT_DIR}/agents/researcher.md"     "${CLAUDE_DIR}/agents/"
+cp "${SCRIPT_DIR}/agents/engineer.md"       "${CLAUDE_DIR}/agents/"
+cp "${SCRIPT_DIR}/agents/runner.md"         "${CLAUDE_DIR}/agents/"
+cp "${SCRIPT_DIR}/agents/reviewer.md"       "${CLAUDE_DIR}/agents/"
+cp "${SCRIPT_DIR}/agents/policy_guard.md"   "${CLAUDE_DIR}/agents/"
+
+cp "${SCRIPT_DIR}/skills/bootstrap-project/SKILL.md"  "${CLAUDE_DIR}/skills/bootstrap-project/"
+cp "${SCRIPT_DIR}/skills/literature-scout/SKILL.md"   "${CLAUDE_DIR}/skills/literature-scout/"
+cp "${SCRIPT_DIR}/skills/experiment-runner/SKILL.md"  "${CLAUDE_DIR}/skills/experiment-runner/"
+cp "${SCRIPT_DIR}/skills/result-analyzer/SKILL.md"    "${CLAUDE_DIR}/skills/result-analyzer/"
+cp "${SCRIPT_DIR}/skills/method-reviser/SKILL.md"     "${CLAUDE_DIR}/skills/method-reviser/"
+cp "${SCRIPT_DIR}/skills/policy-evolver/SKILL.md"     "${CLAUDE_DIR}/skills/policy-evolver/"
+
+cp "${SCRIPT_DIR}/hooks/hooks.json" "${CLAUDE_DIR}/hooks/"
+
+# settings.json (permissions)
+cat > "${CLAUDE_DIR}/settings.json" << 'SETTINGS_EOF'
+{
+  "permissions": {
+    "allow": [
+      "Bash(python*)", "Bash(pytest*)", "Bash(ruff*)", "Bash(black*)",
+      "Bash(conda*)", "Bash(uv*)",
+      "Bash(git add*)", "Bash(git commit*)", "Bash(git status)",
+      "Bash(git diff*)", "Bash(git log*)", "Bash(git branch*)", "Bash(git pull)",
+      "Bash(make*)", "Bash(mkdir*)", "Bash(cp*)", "Bash(mv*)", "Bash(jq*)"
+    ],
+    "deny": [
+      "Bash(curl*)", "Bash(wget*)",
+      "Bash(git push --force*)", "Bash(git reset --hard*)",
+      "Bash(rm -rf*)", "Bash(git clean -f*)"
+    ]
+  }
+}
+SETTINGS_EOF
+
+echo "done — files written to ${CLAUDE_DIR}"
+
+# ──────────────────────────────────────────
+# 5. MCP servers (project-scoped)
+# ──────────────────────────────────────────
+echo ""
+echo "registering MCP servers (project-scoped)..."
+
+if command -v claude &>/dev/null; then
+  cd "${PROJECT_DIR}"
+
+  claude mcp add --scope project arxiv -- uvx arxiv-mcp-server 2>/dev/null \
+    && echo "arxiv MCP registered" || echo "arxiv MCP already registered"
+
+  claude mcp add --scope project fetch -- npx -y @modelcontextprotocol/server-fetch 2>/dev/null \
+    && echo "fetch MCP registered" || echo "fetch MCP already registered"
+
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    GITHUB_PERSONAL_ACCESS_TOKEN="${GITHUB_TOKEN}" \
+    claude mcp add --scope project github -- npx -y @modelcontextprotocol/server-github 2>/dev/null \
+      && echo "github MCP registered" || echo "github MCP already registered"
+  fi
+
+  if [ -n "${BRAVE_API_KEY:-}" ]; then
+    claude mcp add --scope project brave-search \
+      -e BRAVE_API_KEY="${BRAVE_API_KEY}" \
+      -- npx -y @modelcontextprotocol/server-brave-search 2>/dev/null \
+      && echo "brave-search MCP registered" || echo "brave-search MCP already registered"
+  fi
+
+  cd "${SCRIPT_DIR}"
+else
+  echo "claude CLI not found — skipping MCP registration"
+fi
+
+# ──────────────────────────────────────────
+# 6. Python packages
 # ──────────────────────────────────────────
 echo ""
 echo "installing Python packages..."
 pip3 install -q anthropic pyyaml requests && echo "anthropic, pyyaml, requests OK"
-pip3 install -q pymupdf && echo "pymupdf OK (PDF text extraction)" || echo "pymupdf failed — PDF text extraction will be skipped"
+pip3 install -q pymupdf && echo "pymupdf OK" || echo "pymupdf failed — PDF text extraction will be skipped"
 
-# arXiv MCP server (dedicated MCP for paper search/download/read)
 if command -v uv &>/dev/null; then
-  uv tool install arxiv-mcp-server && echo "arxiv-mcp-server OK" || echo "arxiv-mcp-server failed — install manually: uv tool install arxiv-mcp-server"
+  uv tool install arxiv-mcp-server && echo "arxiv-mcp-server OK" \
+    || echo "arxiv-mcp-server failed — install manually: uv tool install arxiv-mcp-server"
 else
-  echo "uv not found — install uv first, then: uv tool install arxiv-mcp-server"
-  echo "uv install: curl -LsSf https://astral.sh/uv/install.sh | sh"
+  echo "uv not found — install uv, then: uv tool install arxiv-mcp-server"
 fi
 
 # ──────────────────────────────────────────
 echo ""
-echo "done. run: source ~/.bashrc"
+echo "installed at ${CLAUDE_DIR}"
+echo "other projects are not affected"
+echo ""
+echo "next: cd ${PROJECT_DIR} && claude"
+echo ""
+[ -z "${ANTHROPIC_API_KEY:-}" ] && echo "note: run 'source ~/.bashrc' to apply API key"
 echo ""
