@@ -21,4 +21,3 @@ Immutable Core is never touched.
 
 ## Never edit
 - CLAUDE.md Immutable Core
-- primary metric

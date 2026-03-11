@@ -17,8 +17,8 @@ conda env create -f environment.yml
 All subsequent python, pytest, and make commands go through `conda run -n {project_name}`.
 
 ### Phase 1: Create project structure
-Collect: project name, objective (one sentence), constraints (GPU memory, latency).
-Do not ask about metrics — researcher decides later.
+Collect: project name and objective (one sentence describing what you want to achieve).
+Do not ask about metrics or hardware constraints — researcher decides metrics from papers.
 
 Create:
 - docs/, configs/, experiments/runs/, experiments/reports/, src/, tests/, scripts/

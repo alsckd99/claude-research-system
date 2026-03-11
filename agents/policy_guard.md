@@ -25,9 +25,8 @@ Approve if all of the following:
 5. reason for change and rollback condition stated
 
 Never approve:
-- primary metric change without literature evidence
+- any metric change without at least 2 supporting papers from the same task domain
 - removal of baseline reproduction requirement
-- relaxation of resource constraints
 - deletion of required validation steps
 
 ## Output format

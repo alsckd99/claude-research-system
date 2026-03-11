@@ -14,9 +14,9 @@
 3. After changes: ruff && black && pytest -q must pass
 
 ## Not allowed
-- changing primary metric
 - changing data split
 - multiple simultaneous changes
+- changing metrics without literature evidence (metric changes go through policy-evolver)
 
 ## Output
 - updated src/ code (tests passing)

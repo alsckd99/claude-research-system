@@ -17,7 +17,7 @@ ruff check src/ && black --check src/ && pytest -q tests/
 ```
 
 ## Out of scope
-- changing primary metric
 - editing CLAUDE.md Immutable Core
+- changing metrics (goes through policy-evolver + policy_guard)
 - running experiments (that is runner's job)
 - interpreting results (that is result-analyzer's job)

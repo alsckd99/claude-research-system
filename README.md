@@ -24,17 +24,19 @@ bash ~/.claude/plugins/claude-research-system/install.sh
 
 Inside Claude Code:
 ```
-create project deepfake-detector — objective: multimodal deepfake detection, GPU 24GB limit
+create a new project — name: my-project, objective: [describe what you want to achieve]
 ```
 
 Or via CLI:
 ```bash
 python orchestrator/new_project.py \
-    --name deepfake-detector \
-    --objective "multimodal deepfake detection" \
-    --gpu-memory 24 \
-    --output ~/projects/deepfake-detector
+    --name my-project \
+    --objective "describe what you want to achieve" \
+    --output ~/projects/my-project
 ```
+
+Metrics are not set here. The researcher agent reads related papers and determines
+the standard evaluation metrics for your task domain.
 
 ---
 
@@ -42,14 +44,14 @@ python orchestrator/new_project.py \
 
 ```bash
 # one-shot analysis
-python orchestrator/main.py --project ~/projects/deepfake-detector --mode analyze-only
+python orchestrator/main.py --project ~/projects/my-project --mode analyze-only
 
 # nightly loop (analyze → experiment → literature → policy)
-python orchestrator/main.py --project ~/projects/deepfake-detector --mode nightly
+python orchestrator/main.py --project ~/projects/my-project --mode nightly
 
 # background scheduler
 nohup python orchestrator/scheduler.py \
-    --project ~/projects/deepfake-detector \
+    --project ~/projects/my-project \
     --interval 24h --mode full-loop &
 ```
 
