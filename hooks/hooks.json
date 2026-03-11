@@ -1,0 +1,68 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport sys, json\ntry:\n    inp = json.load(sys.stdin)\nexcept:\n    sys.exit(0)\ncmd = inp.get('tool_input', {}).get('command', '')\nblocked = ['git push --force', 'git reset --hard', 'rm -rf', 'git clean -f']\nfor b in blocked:\n    if b in cmd:\n        print(f'[research-os] blocked: {b}', file=sys.stderr)\n        sys.exit(2)\nsys.exit(0)\n\""
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport sys, json\ntry:\n    inp = json.load(sys.stdin)\nexcept:\n    sys.exit(0)\nurl = inp.get('tool_input', {}).get('url', '')\nallowed = ['api.semanticscholar.org', 'export.arxiv.org', 'arxiv.org', 'ar5iv.labs.arxiv.org', 'github.com', 'raw.githubusercontent.com', 'api.search.brave.com', 'huggingface.co', 'paperswithcode.com', 'api.openalex.org']\nfrom urllib.parse import urlparse\ndomain = urlparse(url).netloc.lower()\nif not any(domain.endswith(d) for d in allowed):\n    print(f'[research-os] WebFetch blocked: {domain}', file=sys.stderr)\n    sys.exit(2)\nsys.exit(0)\n\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CHANGED=$(git diff --name-only HEAD 2>/dev/null | grep '\\.py$' | tr '\\n' ' '); [ -n \"$CHANGED\" ] && ruff check --fix $CHANGED 2>/dev/null || true; [ -n \"$CHANGED\" ] && black $CHANGED 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(configs/*.yaml)|Write(configs/*.yaml)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f scripts/validate_config.py ] && python scripts/validate_config.py || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport sys, json, os\nfrom datetime import datetime\ntry:\n    inp = json.load(sys.stdin)\nexcept:\n    sys.exit(0)\ntool = inp.get('tool_name', 'unknown')\nerr = inp.get('error', '')\nlog_dir = 'experiments/reports'\nif os.path.isdir(log_dir):\n    with open(f'{log_dir}/tool_failures.log', 'a') as f:\n        f.write(f'[{datetime.now().isoformat()}] {tool}: {str(err)[:200]}\\n')\nsys.exit(0)\n\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f scripts/summarize_results.py ] && python scripts/summarize_results.py --auto 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "[ -f scripts/propose_next_steps.py ] && python scripts/propose_next_steps.py --auto 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

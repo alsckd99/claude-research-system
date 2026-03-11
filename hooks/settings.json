@@ -1,0 +1,32 @@
+{
+  "_note": "hooks는 hooks/hooks.json에서 관리 (Claude Code v2.1+ 자동 로드). 여기는 permissions만.",
+  "permissions": {
+    "allow": [
+      "Bash(python*)",
+      "Bash(pytest*)",
+      "Bash(ruff*)",
+      "Bash(black*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git checkout*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git pull)",
+      "Bash(make*)",
+      "Bash(mkdir*)",
+      "Bash(cp*)",
+      "Bash(mv*)",
+      "Bash(jq*)"
+    ],
+    "deny": [
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(rm -rf*)",
+      "Bash(git clean -f*)"
+    ]
+  }
+}
