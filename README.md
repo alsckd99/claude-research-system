@@ -90,18 +90,24 @@ claude-research-system/
 
 ## Paper search coverage
 
-| Source | What it covers |
-|--------|---------------|
-| Semantic Scholar API | titles, abstracts, citation counts |
-| arXiv API | preprints, full metadata |
-| OpenAlex API | open-access metadata, supplementary |
-| Brave Search MCP | benchmark leaderboards, GitHub repos, official docs (optional) |
+| Source | MCP | What it covers |
+|--------|-----|---------------|
+| arXiv | arxiv-mcp-server (dedicated) | search, download, full-text read — papers cached locally |
+| Semantic Scholar | fetch MCP (HTTP) | titles, abstracts, citation counts |
+| OpenAlex | fetch MCP (HTTP) | open-access metadata, supplementary |
+| Brave Search | brave-search MCP (optional) | benchmark leaderboards, GitHub repos, official docs |
 
-PDF full text (including figures and tables) is extracted via `fetch_paper.py` using PyMuPDF.
+arXiv uses a dedicated MCP (`blazickjp/arxiv-mcp-server`) with structured tool calls instead of raw HTTP — more token-efficient and papers are cached at `~/.arxiv-mcp-server/papers`.
 
 ---
 
 ## References
 
+Design and tooling informed by:
+
+- [blazickjp/arxiv-mcp-server](https://github.com/blazickjp/arxiv-mcp-server) — arXiv MCP used for literature-scout
+- [ralph-wiggum plugin](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) — Stop hook loop pattern reference
+- [feature-dev plugin](https://github.com/anthropics/claude-code/tree/main/plugins/feature-dev) — multi-agent workflow structure reference
+- [Claude Code Plugins reference](https://code.claude.com/docs/en/plugins-reference.md) — plugin manifest format
 - [Awesome Claude Code](https://github.com/anthropics/awesome-claude-code)
 - [Claude Code Docs](https://docs.anthropic.com/claude-code)

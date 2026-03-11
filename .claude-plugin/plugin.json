@@ -1,6 +1,6 @@
 {
-  "name": "research-os",
-  "version": "1.1.0",
+  "name": "claude-research-system",
+  "version": "1.2.0",
   "description": "Autonomous ML R&D loop — project bootstrap, literature search, experiment running, failure analysis, and policy evolution.",
   "agents": "agents/",
   "skills": "skills/",
@@ -12,6 +12,7 @@
       "Bash(ruff*)",
       "Bash(black*)",
       "Bash(conda*)",
+      "Bash(uv*)",
       "Bash(git add*)",
       "Bash(git commit*)",
       "Bash(git status)",
@@ -35,10 +36,15 @@
     ]
   },
   "mcpServers": {
+    "arxiv": {
+      "command": "uvx",
+      "args": ["arxiv-mcp-server"],
+      "description": "arXiv paper search, download, and full-text reading via dedicated MCP tools (search_papers, download_paper, read_paper)"
+    },
     "fetch": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-fetch"],
-      "description": "Paper search (Semantic Scholar, arXiv, OpenAlex) and PDF download"
+      "description": "Semantic Scholar and OpenAlex API calls, general HTTP access"
     },
     "github": {
       "command": "npx",

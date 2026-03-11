@@ -75,6 +75,14 @@ echo "installing Python packages..."
 pip3 install -q anthropic pyyaml requests && echo "anthropic, pyyaml, requests OK"
 pip3 install -q pymupdf && echo "pymupdf OK (PDF text extraction)" || echo "pymupdf failed — PDF text extraction will be skipped"
 
+# arXiv MCP server (dedicated MCP for paper search/download/read)
+if command -v uv &>/dev/null; then
+  uv tool install arxiv-mcp-server && echo "arxiv-mcp-server OK" || echo "arxiv-mcp-server failed — install manually: uv tool install arxiv-mcp-server"
+else
+  echo "uv not found — install uv first, then: uv tool install arxiv-mcp-server"
+  echo "uv install: curl -LsSf https://astral.sh/uv/install.sh | sh"
+fi
+
 # ──────────────────────────────────────────
 echo ""
 echo "done. run: source ~/.bashrc"
