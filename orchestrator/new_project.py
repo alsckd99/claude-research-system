@@ -28,6 +28,10 @@ CLAUDE_MD_TEMPLATE = """\
 ### Objective
 {objective}
 
+### GPU Configuration
+- CUDA_VISIBLE_DEVICES: {gpus}
+- All training and evaluation commands must set this environment variable
+
 ### Required Validation
 1. Reproduce baseline before implementing any new method
 2. `pytest -q` must pass after every code change
@@ -62,6 +66,7 @@ _proposed by researcher + result-analyzer, approved by reviewer before execution
 BASE_CONFIG_TEMPLATE = """\
 project_name: "{name}"
 primary_metric: "TBD"
+gpus: "{gpus}"
 seed: 42
 
 data:
@@ -104,7 +109,7 @@ def copy_scripts(project_dir: Path) -> None:
         )
 
 
-def create_project(name: str, objective: str, project_dir: Path) -> None:
+def create_project(name: str, objective: str, gpus: str, project_dir: Path) -> None:
     print(f"\n[new_project] creating: {name}")
     print(f"[new_project] path: {project_dir}")
 
@@ -118,13 +123,13 @@ def create_project(name: str, objective: str, project_dir: Path) -> None:
 
     # CLAUDE.md
     (project_dir / "CLAUDE.md").write_text(
-        CLAUDE_MD_TEMPLATE.format(objective=objective)
+        CLAUDE_MD_TEMPLATE.format(objective=objective, gpus=gpus)
     )
     print("  [created] CLAUDE.md")
 
     # configs/base.yaml
     (project_dir / "configs" / "base.yaml").write_text(
-        BASE_CONFIG_TEMPLATE.format(name=name)
+        BASE_CONFIG_TEMPLATE.format(name=name, gpus=gpus)
     )
     print("  [created] configs/base.yaml")
 
@@ -171,14 +176,15 @@ def create_project(name: str, objective: str, project_dir: Path) -> None:
     # scripts/
     copy_scripts(project_dir)
 
-    # Makefile
+    cuda_prefix = f"CUDA_VISIBLE_DEVICES={gpus} " if gpus != "cpu" else ""
     (project_dir / "Makefile").write_text(
         ".PHONY: install test lint experiment analyze\n\n"
+        f"GPUS ?= {gpus}\n\n"
         "install:\n\tpip install -e '.[dev]'\n\n"
         "test:\n\tpytest -q tests/\n\n"
         "lint:\n\truff check src/ && black --check src/\n\n"
         "experiment:\n\t@TIMESTAMP=$$(date +%Y%m%d_%H%M%S) && \\\n"
-        "\tpython scripts/run_experiment.py --config configs/base.yaml --output experiments/runs/$$TIMESTAMP\n\n"
+        f"\t{cuda_prefix}python scripts/run_experiment.py --config configs/base.yaml --output experiments/runs/$$TIMESTAMP\n\n"
         "analyze:\n\tpython scripts/analyze_failures.py\n"
         "\tpython scripts/summarize_results.py\n"
         "\tpython scripts/propose_next_steps.py\n\n"
@@ -212,12 +218,14 @@ def main():
     parser.add_argument("--name", required=True, help="project name")
     parser.add_argument("--objective", default="[describe what you want to achieve]",
                         help="one sentence describing the project objective")
+    parser.add_argument("--gpus", default="0",
+                        help="which GPUs to use: 0 / 0,1 / 0,1,2 / all / cpu")
     parser.add_argument("--output", default=".", help="output path")
     args = parser.parse_args()
 
     project_dir = Path(args.output)
     project_dir.mkdir(parents=True, exist_ok=True)
-    create_project(name=args.name, objective=args.objective, project_dir=project_dir)
+    create_project(name=args.name, objective=args.objective, gpus=args.gpus, project_dir=project_dir)
 
 
 if __name__ == "__main__":
