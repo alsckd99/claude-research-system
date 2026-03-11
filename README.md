@@ -7,9 +7,15 @@ Literature search, experiment running, failure analysis, and policy evolution â€
 
 ## Install
 
+Inside Claude Code:
+```
+/plugin marketplace add alsckd99/claude-research-system
+/plugin install claude-research-system
+```
+
+Then run once for API keys and Python packages:
 ```bash
-claude plugin install https://github.com/alsckd99/claude-research-system
-bash install.sh   # API keys + pip packages (one-time)
+bash ~/.claude/plugins/claude-research-system/install.sh
 ```
 
 ---

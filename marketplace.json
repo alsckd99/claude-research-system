@@ -1,0 +1,9 @@
+{
+  "plugins": [
+    {
+      "name": "claude-research-system",
+      "description": "Autonomous ML R&D loop — literature search, experiment running, failure analysis, and policy evolution.",
+      "path": "."
+    }
+  ]
+}
