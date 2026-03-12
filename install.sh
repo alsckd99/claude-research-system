@@ -204,6 +204,64 @@ else
 fi
 
 # ──────────────────────────────────────────
+# 7. Git repo + GitHub remote
+# ──────────────────────────────────────────
+echo ""
+echo "checking git repository..."
+
+cd "${PROJECT_DIR}"
+
+if [ -d ".git" ]; then
+  echo "git repo already exists"
+else
+  echo "no git repo found"
+  read -rp "Initialize git repo? (Y/n): " INIT_GIT
+  INIT_GIT="${INIT_GIT:-Y}"
+  if [[ "${INIT_GIT}" =~ ^[Yy] ]]; then
+    git init
+    git add -A
+    git commit -m "chore: initial commit (claude-research-system)" 2>/dev/null || true
+    echo "git repo initialized"
+  else
+    echo "skipped"
+  fi
+fi
+
+if [ -d ".git" ]; then
+  REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+  if [ -z "${REMOTE_URL}" ]; then
+    echo ""
+    echo "no GitHub remote found"
+    if command -v gh &>/dev/null; then
+      if ! gh auth status &>/dev/null; then
+        echo "gh CLI is not logged in — run 'gh auth login' first"
+      else
+      GH_USER=$(gh api user --jq '.login' 2>/dev/null || echo "unknown")
+      echo "logged in as: ${GH_USER}"
+      PROJECT_NAME=$(basename "${PROJECT_DIR}")
+      read -rp "Create GitHub repo '${GH_USER}/${PROJECT_NAME}' and push? (Y/n): " CREATE_REPO
+      CREATE_REPO="${CREATE_REPO:-Y}"
+      if [[ "${CREATE_REPO}" =~ ^[Yy] ]]; then
+        read -rp "Visibility (public/private) [private]: " REPO_VIS
+        REPO_VIS="${REPO_VIS:-private}"
+        gh repo create "${PROJECT_NAME}" --"${REPO_VIS}" --source=. --remote=origin --push \
+          && echo "GitHub repo created and pushed" \
+          || echo "failed to create repo — check gh auth status"
+      else
+        echo "skipped"
+      fi
+      fi
+    else
+      echo "gh CLI not found — install it to auto-create GitHub repos: https://cli.github.com"
+    fi
+  else
+    echo "GitHub remote: ${REMOTE_URL}"
+  fi
+fi
+
+cd "${SCRIPT_DIR}"
+
+# ──────────────────────────────────────────
 echo ""
 echo "installed at ${CLAUDE_DIR}"
 echo "other projects are not affected"
