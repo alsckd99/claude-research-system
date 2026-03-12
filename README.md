@@ -20,6 +20,11 @@ This writes agents/skills/hooks only into `your-project/.claude/` — other proj
 
 ## Start a new project
 
+```bash
+cd /path/to/your/project
+claude
+```
+
 Inside Claude Code:
 ```
 create a new project — name: my-project, objective: [describe what you want to achieve]
@@ -68,14 +73,19 @@ claude-research-system/
 │   ├── engineer.md              ← code implementation
 │   ├── runner.md                ← experiment execution
 │   ├── reviewer.md              ← result validation
-│   └── policy_guard.md         ← policy review (protects immutable core)
+│   ├── policy_guard.md         ← policy review (protects immutable core)
+│   └── environment_manager.md  ← conda, dependency, GPU management
 ├── skills/
 │   ├── bootstrap-project/       ← new project initialization
 │   ├── literature-scout/        ← paper search (Semantic Scholar, arXiv, OpenAlex)
 │   ├── experiment-runner/       ← run experiments + save results
-│   ├── result-analyzer/         ← failure classification + root cause analysis
+│   ├── result-analyzer/         ← failure classification + code-level deep analysis
 │   ├── method-reviser/          ← evidence-based code changes
-│   └── policy-evolver/          ← incremental eval policy updates
+│   ├── policy-evolver/          ← incremental eval policy updates
+│   ├── data-auditor/            ← dataset quality/distribution analysis
+│   ├── ablation-planner/        ← component contribution verification
+│   ├── report-writer/           ← experiment report generation
+│   └── system-updater/          ← auto-check Claude Code updates
 ├── hooks/
 │   └── hooks.json               ← PreToolUse / PostToolUse / Stop hooks
 ├── orchestrator/
