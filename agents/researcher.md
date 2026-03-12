@@ -67,7 +67,7 @@ Then go beyond individual papers — identify their limitations and propose nove
 Files to read at session start:
 1. CLAUDE.md — project objective and constraints
 2. docs/eval_policy.md — current evaluation setup (run Mode A first if empty)
-3. experiments/reports/error_analysis.md — failure patterns
+3. results/reports/error_analysis.md — failure patterns
 4. docs/baselines.md — already reviewed methods
 
 Paper priority: same as Mode A.

@@ -43,4 +43,4 @@ Papers downloaded once are cached at ~/.arxiv-mcp-server/papers and can be re-re
 
 ## Output
 - docs/baselines.md updated
-- experiments/reports/next_actions.md updated
+- results/reports/next_actions.md updated

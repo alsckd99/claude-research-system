@@ -23,7 +23,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
           cache: 'pip'
 
       - run: pip install -r requirements.txt
@@ -42,11 +42,11 @@ jobs:
           import subprocess, sys
           subprocess.run([sys.executable, '-m', 'scripts.run_experiment',
             '--config', 'configs/base.yaml',
-            '--output', 'experiments/runs/ci_$(date +%Y%m%d_%H%M%S)'])
+            '--output', 'results/runs/ci_$(date +%Y%m%d_%H%M%S)'])
           " 2>/dev/null || \
           python scripts/run_experiment.py \
             --config configs/base.yaml \
-            --output experiments/runs/ci_$(date +%Y%m%d_%H%M%S)
+            --output results/runs/ci_$(date +%Y%m%d_%H%M%S)
 
       - name: Analyze & Report
         run: |
@@ -58,7 +58,7 @@ jobs:
         run: |
           git config user.name "research-os-bot"
           git config user.email "bot@research-os"
-          git add experiments/reports/ experiments/registry.json
+          git add results/reports/ results/registry.json
           git diff --staged --quiet || \
             git commit -m "chore: nightly loop $(date +%Y%m%d)"
           git push origin HEAD
@@ -67,5 +67,5 @@ jobs:
         if: always()
         with:
           name: nightly-${{ github.run_number }}
-          path: experiments/reports/
+          path: results/reports/
           retention-days: 30

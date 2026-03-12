@@ -27,4 +27,4 @@ low-confidence observations (< 80%):
 ```
 
 ## Output file
-- experiments/reports/review_{timestamp}.md
+- results/reports/review_{timestamp}.md

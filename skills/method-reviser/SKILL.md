@@ -12,7 +12,7 @@
 ## Steps
 
 ### Step 1: Read context
-1. experiments/reports/error_analysis.md — what is failing and why
+1. results/reports/error_analysis.md — what is failing and why
 2. docs/synthesis_proposals.md — ranked proposals from researcher (preferred input)
 3. docs/baselines.md — individual paper methods as fallback
 4. Current src/ code — understand what is already implemented
@@ -20,7 +20,7 @@
 ### Step 2: Determine implementation mode
 
 **Mode A — Faithful reproduction** (default for any new method):
-- Check if this method has ever been run before (look in experiments/registry.json)
+- Check if this method has ever been run before (look in results/registry.json)
 - If not: implement the paper exactly as described — no modifications, no improvements
 - Goal: reproduce the paper's reported metric. 재현 성공 기준은 프로젝트와 metric에 따라 다르다 (default: within 5%, eval_policy.md에 다른 기준이 있으면 따른다)
 - Do NOT add ideas from other papers yet
@@ -34,7 +34,7 @@
 Mode A → B 순서를 권장하지만, 재현이 불가능한 경우 (코드 비공개, 데이터셋 불일치 등) 사유를 기록하고 Mode B로 진행할 수 있다.
 
 ### Step 3: Write a change plan BEFORE touching code
-Document in experiments/reports/next_actions.md:
+Document in results/reports/next_actions.md:
 ```
 ## Change Plan — {date}
 proposal: {name from synthesis_proposals.md or baselines.md}
@@ -78,5 +78,5 @@ pytest -q tests/
 
 ## Output
 - updated src/ code (tests passing)
-- experiments/reports/next_actions.md updated with change plan
+- results/reports/next_actions.md updated with change plan
 - docs/handoff_method_reviser.md: what was changed, what is novel, rollback instructions

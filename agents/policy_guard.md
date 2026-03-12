@@ -34,6 +34,6 @@ next steps:
 
 ## Files to read at session start
 1. CLAUDE.md — verify Immutable Core
-2. experiments/reports/proposed_policy_changes.md — items under review
-3. experiments/reports/error_analysis.md — failure context
+2. results/reports/proposed_policy_changes.md — items under review
+3. results/reports/error_analysis.md — failure context
 4. docs/eval_policy.md — current policy

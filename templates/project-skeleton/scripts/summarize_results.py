@@ -1,5 +1,5 @@
 """
-최근 실험 결과를 요약하여 experiments/reports/latest.md를 갱신한다.
+최근 실험 결과를 요약하여 results/reports/latest.md를 갱신한다.
 hooks의 Stop 이벤트 또는 experiment-runner 완료 후 자동 실행.
 """
 import argparse
@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def load_registry() -> list:
-    registry_path = Path("experiments/registry.json")
+    registry_path = Path("results/registry.json")
     if not registry_path.exists():
         return []
     with open(registry_path) as f:
@@ -94,8 +94,8 @@ _Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_
             for k, v in metrics_data["secondary_metrics"].items():
                 report += f"- **{k}**: {v}\n"
 
-    report += "\n\n---\n_See `experiments/reports/error_analysis.md` for failure analysis._\n"
-    report += "_See `experiments/reports/next_actions.md` for next steps._\n"
+    report += "\n\n---\n_See `results/reports/error_analysis.md` for failure analysis._\n"
+    report += "_See `results/reports/next_actions.md` for next steps._\n"
 
     return report
 
@@ -113,7 +113,7 @@ def main():
 
     report = generate_report(runs)
 
-    output_path = Path("experiments/reports/latest.md")
+    output_path = Path("results/reports/latest.md")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report)
 

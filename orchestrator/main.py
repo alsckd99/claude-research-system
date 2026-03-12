@@ -49,7 +49,7 @@ def read_file(path: Path) -> str:
 
 
 def load_registry(project: Path) -> list:
-    reg = project / "experiments" / "registry.json"
+    reg = project / "results" / "registry.json"
     if not reg.exists():
         return []
     return json.loads(reg.read_text()).get("runs", [])
@@ -111,9 +111,9 @@ def phase_analyze(project: Path) -> dict:
             print(f"  skip: scripts/{script} not found")
 
     return {
-        "latest_report": read_file(project / "experiments" / "reports" / "latest.md"),
-        "error_analysis": read_file(project / "experiments" / "reports" / "error_analysis.md"),
-        "next_actions": read_file(project / "experiments" / "reports" / "next_actions.md"),
+        "latest_report": read_file(project / "results" / "reports" / "latest.md"),
+        "error_analysis": read_file(project / "results" / "reports" / "error_analysis.md"),
+        "next_actions": read_file(project / "results" / "reports" / "next_actions.md"),
     }
 
 
@@ -133,7 +133,7 @@ def phase_experiment(project: Path) -> dict:
             return {"status": "skipped", "reason": "config_invalid"}
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = project / "experiments" / "runs" / timestamp
+    output_dir = project / "results" / "runs" / timestamp
 
     exp_script = project / "scripts" / "run_experiment.py"
     if not exp_script.exists():
@@ -168,7 +168,7 @@ def phase_literature(project: Path, max_turns: int) -> None:
         print("[literature] claude CLI not found — skip")
         return
 
-    error_analysis = read_file(project / "experiments" / "reports" / "error_analysis.md")
+    error_analysis = read_file(project / "results" / "reports" / "error_analysis.md")
     prompt = (
         "Run the literature-scout skill. "
         f"Current failure analysis:\n{error_analysis[:500]}\n\n"
@@ -179,7 +179,7 @@ def phase_literature(project: Path, max_turns: int) -> None:
 
 def phase_policy(project: Path, max_turns: int) -> None:
     print("\n[policy] start")
-    proposed = project / "experiments" / "reports" / "proposed_policy_changes.md"
+    proposed = project / "results" / "reports" / "proposed_policy_changes.md"
     if not proposed.exists() or not proposed.read_text().strip():
         print("[policy] no proposals — skip")
         return
@@ -246,7 +246,7 @@ Lead with conclusions. Keep each item to 3 lines or fewer.
     print(output)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_path = project / "experiments" / "reports" / f"agent_analysis_{ts}.md"
+    out_path = project / "results" / "reports" / f"agent_analysis_{ts}.md"
     out_path.write_text(
         f"# Agent Analysis\ngenerated: {datetime.now().isoformat()}\n\n{output}\n"
     )

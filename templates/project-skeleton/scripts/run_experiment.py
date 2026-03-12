@@ -106,7 +106,7 @@ def save_plots(output_dir: Path, metrics: dict) -> None:
 
 
 def update_registry(run_dir: Path, metrics: dict) -> None:
-    registry_path = Path("experiments/registry.json")
+    registry_path = Path("results/registry.json")
     if registry_path.exists():
         with open(registry_path) as f:
             registry = json.load(f)
