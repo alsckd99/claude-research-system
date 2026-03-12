@@ -5,8 +5,27 @@
 - project directory is empty
 
 ## Purpose
-사용자의 objective를 받아서, 연구 탐색 → 구현 → 실험 → 개선 루프까지
-자동으로 수행하는 연구 프로젝트를 만든다.
+사용자의 objective를 받아서 연구 프로젝트를 만들고, 자동 개선 루프를 돌린다.
+
+---
+
+## Core principle: 연구는 비선형이다
+
+논문을 찾다가 새로운 기법을 발견하면 그게 곧 새 방향이 된다.
+결과를 분석하다가 논문에서 본 기법이 떠오르면 그걸 적용한다.
+모델을 세팅하다가 README에서 관련 논문을 발견하면 그것도 후보에 넣는다.
+
+**어느 단계에서든 새 발견이 있으면 기존 계획을 수정한다.**
+변경 시 `docs/research_log.md`에 기록:
+```
+## {date} — Direction change
+Trigger: {무엇을 하다가 발견했는지}
+Found: {무엇을 발견했는지}
+Impact: {기존 계획에서 무엇이 바뀌는지}
+```
+
+아래 Phase 1~7은 **최초 셋업 순서**이다. 한번 loop에 진입하면 순서는 의미 없고,
+분석 → 탐색 → 구현 → 실험이 유기적으로 반복된다.
 
 ---
 
@@ -18,179 +37,101 @@
 3. **Test dataset** — 평가에 쓸 데이터 경로 또는 이름 (train과 같을 수 있음)
 4. **GPU** — 사용 가능한 GPU (예: 0 / 0,1 / all / cpu)
 
-질문하지 않는 것:
-- 어떤 모델을 쓸지 (자동 탐색)
-- 어떤 metric을 쓸지 (논문 기반 자동 결정)
-- 어떤 방법론을 쓸지 (논문 기반 자동 결정)
+질문하지 않는 것: 모델, metric, 방법론 (전부 자동 탐색)
 
 ---
 
-## Phase 2: Objective analysis
+## Phase 2: Initial research (researcher agent)
 
-Objective를 분석해서 이 프로젝트에 **무엇이 필요한지** 판단한다.
+Objective를 바탕으로 첫 탐색을 수행한다.
 
-1. Objective에서 핵심 task와 goal을 추출
-2. 이 goal을 달성하려면 어떤 연구가 필요한지 판단
-3. 판단 결과를 사용자에게 보여주고 확인
+1. 관련 논문/모델/기법을 검색
+2. 찾은 논문을 읽으면서 추가로 참조된 기법이나 모델이 있으면 그것도 따라간다
+3. 탐색 결과를 바탕으로 프로젝트의 출발점과 방향을 정리
 
+사용자에게 보고:
 ```
-## Project Analysis
+## Research Summary
 
-Objective: {objective}
-Core task: {무엇을 하는 프로젝트인지}
-Research direction: {어떤 연구가 필요한지 — 자유 서술}
-What to search: {어떤 모델/논문/기법을 찾아야 하는지}
+### 출발점: {어떤 모델/코드를 base로 쓸지, 왜}
+### 개선 후보 (priority order):
+1. {기법/논문} — {왜}
+2. ...
+
+### 탐색 중 발견한 것:
+- {논문 A에서 기법 X를 쓰고 있었는데, 이것도 적용 가능}
+- {모델 B의 README에서 관련 체크포인트 발견}
+- ...
 
 이 방향으로 진행할까요?
 ```
 
-### Project structure
-
-```
-{project}/
-├── CLAUDE.md
-├── configs/base.yaml
-├── data/                  # immutable inputs
-├── models/                # cloned repos + checkpoints
-├── results/runs/          # per-iteration results
-├── src/                   # objective에 맞게 자유롭게 구성
-├── scripts/               # pipeline scripts
-├── docs/                  # eval_policy, baselines
-└── tests/
-```
-
-`src/` 하위 구조는 objective 분석 결과에 따라 자유롭게 결정.
-
-conda 환경 생성:
-```bash
-conda create -n {project_name} python=3.10 pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia -y
-```
+모든 후보를 `docs/baselines.md`에 기록.
 
 ---
 
-## Phase 3: Research (researcher agent, parallel tracks)
-
-Phase 2의 분석을 바탕으로 **두 track을 병렬 수행**.
-
-### Track A: Base 탐색
-
-이 프로젝트의 출발점이 되는 모델/코드를 찾는다.
-몇 개를, 왜 찾는지는 Phase 2 분석에서 결정된다.
-
-각 후보에 대해:
-```
-Model: {name}
-Paper: {title} ({venue} {year})
-GitHub: {url} (stars: {N}, last commit: {date})
-Role in this project: {이 프로젝트에서 어떤 역할인지}
-Strengths: {이 task에서 잘하는 것}
-Weaknesses: {한계점}
-Checkpoint: available / needs training / needs fine-tuning
-```
-
-### Track B: 개선 방향 탐색
-
-이 프로젝트의 성능을 높일 수 있는 기법/논문을 찾는다.
-무엇을 찾을지는 Phase 2 분석과 Track A의 모델 약점에서 결정된다.
-
-각 후보에 대해:
-```
-Improvement: {name}
-Paper: {title} ({venue} {year})
-What it changes: {무엇을 바꾸는 기법인지}
-Why applicable: {이 프로젝트의 어떤 문제를 해결하는지}
-Implementation complexity: low / medium / high
-Expected impact: {근거와 함께}
-```
-
-모든 후보를 `docs/baselines.md`에 기록. 초기 baseline 1개만 선정.
-
-사용자에게 연구 결과 보고 후 확인.
-
----
-
-## Phase 4: Setup
+## Phase 3: Setup
 
 사용자 확인 후:
 
-1. **Clone repos**: `git clone {repo_url} models/{model_name}`
-2. **Checkpoint download**: README 읽고 다운로드 (HuggingFace / GDrive / wget / 수동)
+1. **Project structure 생성** — `src/` 구조는 연구 결과에 맞게 자유롭게 결정
+2. **Clone repos & download checkpoints**
 3. **Usage mode 판단**: pretrained 그대로 / fine-tune / train from scratch
-4. **Register**: `models/model_registry.json`에 기록
+4. **Register**: `models/model_registry.json`
+5. **conda 환경 생성**
+
+셋업 중 README, 코드, 논문 등에서 새 발견이 있으면 Phase 2 결과를 수정한다.
 
 ---
 
-## Phase 5: Evaluation framework (researcher agent)
+## Phase 4: Evaluation framework (researcher agent)
 
-"Objective: '{objective}'.
-Models: {from model_registry.json}.
-Design evaluation metrics.
-Include sanity checks from .claude/skills/result-analyzer/sanity_checks.md.
-Pay special attention to dataset class balance."
+Objective와 dataset에 맞는 evaluation metrics 설계.
+Sanity checks from `.claude/skills/result-analyzer/sanity_checks.md` 포함.
 
 Output: `docs/eval_policy.md`
 
 ---
 
-## Phase 6: Implement (engineer agent)
+## Phase 5: Implement & run baseline
 
-"Objective: '{objective}'.
-Models: see model_registry.json.
-Baseline: {from Track B}.
-Evaluation: see docs/eval_policy.md.
+Engineer agent:
+- Objective, 모델, baseline approach, eval_policy에 맞게 pipeline 구현
+- `scripts/run_all.sh`, `scripts/improve_loop.py` 포함
+- Tests must pass
 
-Implement the pipeline. src/ 구조와 scripts/는 objective에 맞게 설계.
-Each script independently runnable.
-Implement scripts/run_all.sh and scripts/improve_loop.py.
-Tests must pass."
+Runner agent:
+- Baseline 실행, 결과 저장 (`results/runs/`)
 
 ---
 
-## Phase 7: Run baseline (runner agent)
+## Phase 6: Safety gate — DO NOT SKIP
 
-"Run the full pipeline. Save results to results/runs/."
-
----
-
-## Phase 7.5: Safety gate — DO NOT SKIP
-
-Verify:
 1. `pytest -q` passes
-2. docs/eval_policy.md has confirmed primary metric
+2. `docs/eval_policy.md` has confirmed primary metric
 3. At least 1 completed evaluation in results/
-4. models/model_registry.json has at least 1 model with status "ready"
-5. Sanity checks pass on baseline results
+4. Sanity checks pass on baseline results
 
 If any fails → fix before proceeding.
 
 ---
 
-## Phase 8: Autonomous improvement loop
+## Phase 7: Improvement loop
 
-매 iteration마다 결과를 분석하고, 그 분석에서 나온 약점을 해결하는 논문을 찾아서 적용한다.
-
-Loop:
-1. **result-analyzer**: 결과 분석 + sanity checks → 현재 약점 파악
-2. **literature-scout**: 약점을 해결하는 논문 검색 (무엇을 찾을지는 분석 결과가 결정)
-3. **method-reviser**: 논문의 기법을 구현 (한 번에 하나씩)
-4. **experiment-runner**: 실행
-5. **result-analyzer**: 비교, 다음 방향 결정
+매 iteration:
+1. **분석**: 결과 + sanity checks → 현재 약점
+2. **탐색**: 약점을 해결하는 논문 검색
+   - 논문을 읽다가 다른 유용한 기법을 발견하면 그것도 후보에 추가
+   - 관련 논문의 reference를 따라가다 더 좋은 접근을 발견할 수 있음
+3. **구현**: 한 번에 하나씩 적용
+4. **실행**: 실험
+5. **비교**: 개선됨 → 새 baseline / 악화됨 → revert, 다음 후보
 6. Repeat
 
-#### Phase A (reproduction)
-새 기법 적용 전, 해당 논문의 방법을 원본대로 재현:
-- 논문의 보고 수치와 비교 (within 5%)
-- 재현 실패 → 엔지니어링 이슈 해결
-- 재현 성공 → gap analysis
-
-#### Phase B (적용 & 개선)
-- 재현된 기법을 프로젝트에 적용
-- 개선됨 → 새 baseline, 다음 약점 분석
-- 악화됨 → revert, 다음 후보
-- 한 번에 하나의 변경만 적용
+새 기법 적용 시 가능하면 해당 논문의 방법을 먼저 원본대로 재현 (within 5%) 후 적용.
 
 **Escalation triggers:**
-- stall_count >= 2: 2+ loops 개선 없음
+- 2+ loops 개선 없음
 - Same error 3+ times
 - Sanity check flag 3+ consecutive
 - pytest fails → 즉시 중단
@@ -198,7 +139,8 @@ Loop:
 ---
 
 ## Notes
-- 프로젝트마다 필요한 연구, 구조, 개선 방향이 전부 다르다 — 이 skill은 프레임워크만 제공하고, 내용은 objective 분석에서 동적으로 결정된다
+- 이 skill은 프레임워크만 제공한다. 내용은 전부 objective와 논문 탐색에서 동적으로 결정된다.
+- 연구 중 발견한 것은 언제든 계획을 바꿀 수 있다 — `docs/research_log.md`에 기록.
 - 한 번에 하나의 변경만 적용 (ablation 가능)
 - pretrain checkpoint 있으면 우선 사용
 - 데이터셋 불균형은 eval framework에서 선제 대응
