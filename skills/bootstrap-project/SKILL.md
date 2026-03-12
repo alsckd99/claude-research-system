@@ -41,13 +41,15 @@ Impact: {기존 계획에서 무엇이 바뀌는지}
 
 ---
 
-## Phase 2: Initial research (researcher agent)
+## Phase 2: Initial research (researcher agent) + Data audit (data-auditor skill)
 
 Objective를 바탕으로 첫 탐색을 수행한다.
 
 1. 관련 논문/모델/기법을 검색
 2. 찾은 논문을 읽으면서 추가로 참조된 기법이나 모델이 있으면 그것도 따라간다
 3. 탐색 결과를 바탕으로 프로젝트의 출발점과 방향을 정리
+4. **데이터 감사** — data-auditor skill로 데이터셋 분석 (분포, 불균형, 품질, leakage)
+   - 결과는 Phase 4 eval_policy 설계에 반영
 
 사용자에게 보고:
 ```
@@ -141,6 +143,8 @@ If any fails → fix before proceeding.
 ## Notes
 - 이 skill은 프레임워크만 제공한다. 내용은 전부 objective와 논문 탐색에서 동적으로 결정된다.
 - 연구 중 발견한 것은 언제든 계획을 바꿀 수 있다 — `docs/research_log.md`에 기록.
-- 한 번에 하나의 변경만 적용 (ablation 가능)
+- 한 번에 하나의 변경만 적용 — 여러 component 동시 적용 시 ablation-planner skill로 기여도 검증
 - pretrain checkpoint 있으면 우선 사용
-- 데이터셋 불균형은 eval framework에서 선제 대응
+- 데이터셋 불균형은 data-auditor + eval framework에서 선제 대응
+- 프로젝트 마무리 또는 중간 정리 시 report-writer skill로 전체 리포트 생성
+- 환경 문제 발생 시 environment_manager agent 활용
