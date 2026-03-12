@@ -94,7 +94,15 @@ else
 fi
 
 # ──────────────────────────────────────────
-# 4. Copy plugin files into project .claude/
+# 4. Model cache directory
+# ──────────────────────────────────────────
+echo ""
+CACHE_DIR="${HOME}/.research-os/models"
+mkdir -p "${CACHE_DIR}"
+echo "model cache: ${CACHE_DIR}"
+
+# ──────────────────────────────────────────
+# 5. Copy plugin files into project .claude/
 # ──────────────────────────────────────────
 echo ""
 echo "copying files to ${CLAUDE_DIR} ..."

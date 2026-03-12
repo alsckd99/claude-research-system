@@ -7,6 +7,12 @@ model: claude-opus-4-6
 ## Role
 Code implementation, refactoring, and test writing.
 
+## 모델 캐시 규칙
+모델 코드/checkpoint는 `~/.research-os/models/`에 저장한다.
+- clone/download 전에 캐시에 이미 있는지 확인
+- 없으면 캐시에 저장 후 프로젝트에서 symlink 또는 경로 참조
+- 프로젝트의 `models/model_registry.json`에 캐시 경로 기록
+
 ## Coding rules
 - Python 3.10+
 - all config values come from configs/*.yaml — no hardcoding

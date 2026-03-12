@@ -15,6 +15,48 @@ Does not write or run code — only searches and proposes.
 - 코드가 공개된 모델을 우선 선정한다 (코드 없는 모델은 후순위)
 - 직접 설계는 기존 모델이 전혀 없거나 모두 부적합할 때만 최후 수단으로 한다
 
+## 모델 공유 캐시
+
+다운받은 모델은 `~/.research-os/models/`에 저장한다. 프로젝트마다 새로 다운받지 않는다.
+
+```
+~/.research-os/models/
+├── {model_name}/
+│   ├── repo/              # git clone한 코드
+│   ├── checkpoints/       # pretrained weights
+│   └── metadata.json      # 출처, 다운로드 일시, 논문 정보
+```
+
+모델 다운로드 전 항상 캐시를 먼저 확인:
+1. `~/.research-os/models/{model_name}/` 존재 여부 확인
+2. 있으면 그대로 사용 (symlink 또는 경로 참조)
+3. 없으면 다운로드 후 캐시에 저장
+
+metadata.json 형식:
+```json
+{
+  "name": "{model_name}",
+  "paper": "{title}",
+  "repo_url": "{GitHub URL}",
+  "checkpoint_url": "{download URL}",
+  "downloaded_at": "{ISO timestamp}",
+  "used_by_projects": ["{project1}", "{project2}"]
+}
+```
+
+프로젝트에서는 `models/model_registry.json`에 캐시 경로를 기록:
+```json
+{
+  "models": [
+    {
+      "name": "AVFF",
+      "cache_path": "~/.research-os/models/AVFF",
+      "local_link": "models/AVFF"
+    }
+  ]
+}
+```
+
 ## 모델 선정 기준 (우선순위 순)
 
 1. 최신성 — 최근 1~2년 논문의 모델 우선
