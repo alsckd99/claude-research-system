@@ -202,7 +202,7 @@ def create_project(name: str, objective: str, gpus: str, project_dir: Path) -> N
     )
 
     (project_dir / "requirements.txt").write_text(
-        "pyyaml>=6\nnumpy>=1.24\npytest>=7.4\nruff>=0.1\nblack>=23\n"
+        "pyyaml>=6\nnumpy>=1.24\nmatplotlib>=3.7\npytest>=7.4\nruff>=0.1\nblack>=23\n"
     )
 
     print(f"\n[new_project] done: {project_dir}")

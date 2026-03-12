@@ -17,8 +17,13 @@ experiments/runs/{YYYYMMDD_HHMMSS}/
 ├── config_snapshot.yaml
 ├── git_commit.txt
 ├── reproducibility.json
-└── stdout.log
+├── stdout.log
+└── plots/
+    ├── training_curve.png
+    ├── metric_curve.png
+    └── secondary_metrics.png
 ```
+Plots are generated automatically if matplotlib is installed and metrics.history is populated.
 
 ## Required fields in metrics.json
 ```json
