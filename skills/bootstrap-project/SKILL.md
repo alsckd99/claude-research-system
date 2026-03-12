@@ -42,16 +42,42 @@ Write docs/eval_policy.md with one primary metric and secondary metrics, each ba
 After researcher finishes:
 - fill in TBD fields in CLAUDE.md with confirmed metrics
 - update evaluation section in configs/base.yaml
-- write next_actions.md: "next step: implement baseline"
+
+### Phase 4: Implement baseline (delegate to engineer)
+Hand off to engineer agent:
+
+"The evaluation framework is ready. Implement a minimal but runnable baseline for this project.
+Objective: {objective}
+Primary metric: {metric from eval_policy.md}
+Follow the coding rules in CLAUDE.md. Tests must pass before handing off to runner."
+
+### Phase 5: Run baseline experiment (delegate to runner)
+After engineer finishes and tests pass:
+
+Hand off to runner agent:
+"Run the baseline experiment and save results."
+
+### Phase 6: Start autonomous loop
+After the first experiment completes, immediately begin the loop without waiting for user input:
+
+1. result-analyzer: analyze the baseline results, write error_analysis.md
+2. literature-scout: search for improvement methods based on failure patterns
+3. method-reviser: propose and implement the most promising change
+4. experiment-runner: run the updated experiment
+5. repeat from step 1
+
+Stop condition: loop continues until the user interrupts or `--no-improve-k` is reached.
 
 ## Notes
 - each project gets its own conda environment named after the project
 - metrics are not fixed upfront — researcher reads papers and decides
 - no metric selection without literature evidence
 - policy_guard reviews eval_policy.md before it takes effect
+- the loop starts automatically after the first experiment — no user prompt needed
 
 ## Output
 - standard project directory structure
 - docs/eval_policy.md with literature-backed evaluation setup
 - CLAUDE.md with confirmed metrics
-- experiments/reports/next_actions.md
+- baseline implemented and first experiment run
+- autonomous improvement loop running
