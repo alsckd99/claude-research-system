@@ -5,7 +5,7 @@
 - project directory is empty
 
 ## Purpose
-사용자의 objective를 받아서, 모델 탐색 → 방법론 탐색 → 구현 → 실험 → 개선 루프까지
+사용자의 objective를 받아서, 연구 탐색 → 구현 → 실험 → 개선 루프까지
 자동으로 수행하는 연구 프로젝트를 만든다.
 
 ---
@@ -13,7 +13,7 @@
 ## Phase 1: Collect info
 
 사용자에게 질문:
-1. **Objective** — 한 문장 (예: "multimodal deepfake detection에서 FakeAVCeleb SOTA 달성", "medical image segmentation에서 few-shot 성능 향상")
+1. **Objective** — 한 문장
 2. **Train dataset** — 학습에 쓸 데이터 경로 또는 이름
 3. **Test dataset** — 평가에 쓸 데이터 경로 또는 이름 (train과 같을 수 있음)
 4. **GPU** — 사용 가능한 GPU (예: 0 / 0,1 / all / cpu)
@@ -21,26 +21,79 @@
 질문하지 않는 것:
 - 어떤 모델을 쓸지 (자동 탐색)
 - 어떤 metric을 쓸지 (논문 기반 자동 결정)
-- 어떤 방법론을 쓸지 (objective 분석 후 자동 결정)
+- 어떤 방법론을 쓸지 (논문 기반 자동 결정)
 
 ---
 
-## Phase 2: Project structure
+## Phase 2: Objective analysis & project type
 
-Create:
+Objective를 분석해서 **프로젝트 유형**을 판단한다. 이 판단이 이후 모든 Phase의 흐름을 결정한다.
+
+### Step 2.1: Project type 분류
+
+```
+objective를 읽고 다음 중 해당하는 유형을 판단:
+
+A. Multi-model combination
+   — "여러 모델을 합쳐서", "ensemble", "fusion"
+   — 기존 모델 여러 개를 조합해서 성능을 높이는 것이 핵심
+   → 모델 여러 개 탐색 + 조합 방법론 탐색
+
+B. Single-model improvement
+   — "이 모델의 성능을 높이고 싶어", "Diffusion model로 X를 잘하고 싶어"
+   — 하나의 모델/아키텍처를 개선하는 것이 핵심
+   → 베이스 모델 1개 + 개선 기법 탐색 (loss, layer, feature, embedding, augmentation 등)
+
+C. New method development
+   — "새로운 방법으로 X를 풀고 싶어", "기존 방법들의 한계를 넘고 싶어"
+   — 기존 SOTA를 분석하고 새로운 접근법을 설계
+   → SOTA 모델 분석 + 한계점 기반 새 방법론 설계
+
+D. Task adaptation
+   — "X 모델을 Y task에 적용하고 싶어", "domain adaptation"
+   — 기존 모델을 새로운 도메인/task에 맞추는 것이 핵심
+   → 소스 모델 + adaptation 기법 탐색
+
+E. Data-centric
+   — "데이터가 적어", "few-shot", "self-supervised", "augmentation"
+   — 제한된 데이터로 최대 성능을 뽑는 것이 핵심
+   → 모델 + 데이터 효율적 학습 기법 탐색
+
+위 5개에 맞지 않으면, objective에 맞게 새로운 유형을 정의한다.
+유형은 고정 목록이 아니라 가이드라인이다.
+```
+
+사용자에게 판단 결과를 보여주고 확인:
+```
+프로젝트 유형: {type}
+근거: {왜 이 유형으로 판단했는지}
+이 방향으로 진행할까요?
+```
+
+### Step 2.2: Project structure
+
+판단된 유형에 따라 디렉토리 구조를 생성:
 ```
 {project}/
 ├── CLAUDE.md
 ├── configs/base.yaml
-├── data/                  # immutable inputs: scores, extracted features, raw data
+├── data/                  # immutable inputs
 ├── models/                # cloned repos + checkpoints
-├── results/runs/          # per-iteration results (growing output)
-├── src/models/            # model wrappers
-├── src/methods/           # approach implementations (determined by objective)
-├── src/evaluation/        # metrics
+├── results/runs/          # per-iteration results
+├── src/                   # 구조는 유형에 따라 다름 (아래 참고)
 ├── scripts/               # pipeline scripts
-├── docs/                  # eval_policy, baselines
+├── docs/                  # eval_policy, baselines, improvement_log
 └── tests/
+```
+
+`src/` 하위 구조는 프로젝트 유형에 맞게 동적으로 결정:
+```
+# Type A (multi-model): src/models/, src/fusion/, src/evaluation/
+# Type B (single-model): src/model/, src/modifications/, src/evaluation/
+# Type C (new method): src/baselines/, src/proposed/, src/evaluation/
+# Type D (adaptation): src/source_model/, src/adaptation/, src/evaluation/
+# Type E (data-centric): src/model/, src/data_strategy/, src/evaluation/
+# 기타: objective에 맞게 자유롭게 결정
 ```
 
 conda 환경 생성:
@@ -50,249 +103,177 @@ conda create -n {project_name} python=3.10 pytorch torchvision torchaudio pytorc
 
 ---
 
-## Phase 3: Parallel search — models AND approach
+## Phase 3: Research (researcher agent, parallel tracks)
 
-**이 두 가지를 동시에 수행한다.** 순서가 아니라 병렬이다.
+프로젝트 유형에 따라 연구 전략이 완전히 달라진다.
+**두 track을 병렬로 수행한다.**
 
-### Track A: Model search (researcher agent)
+### Track A: 기반 모델/코드 탐색
 
-목표: objective에 적합한 개별 모델 후보를 찾되, **각 모델이 task의 어떤 측면을 잘하는지** 분석.
+프로젝트 유형별로 찾는 것이 다르다:
 
-**Step A.1: Task 분해**
+**Type A (multi-model):**
+- Objective를 sub-task로 분해
+- 각 sub-task를 커버하는 모델 후보를 찾되 **상호보완적** 조합 선택
+- 모델 3~6개
 
-Objective를 sub-task로 분해한다. 예시:
-```
-# Example 1: multimodal deepfake detection
-Task decomposition:
-- Visual forgery detection (face swap, reenactment)
-- Audio forgery detection (voice conversion, TTS)
-- Audio-visual synchronization (lip-sync consistency)
-- Cross-modal identity verification
+**Type B (single-model):**
+- 해당 task의 SOTA 또는 base 모델 1개를 찾음
+- 그 모델의 강점/약점/한계를 논문에서 분석
+- 같은 task에서 다른 접근법을 쓰는 모델도 1-2개 참고용으로 분석 (직접 쓰지 않더라도 아이디어 차용)
 
-# Example 2: medical image segmentation
-Task decomposition:
-- Organ boundary delineation
-- Small lesion detection
-- Multi-scale feature extraction
-- Domain generalization across scanners
-```
+**Type C (new method):**
+- 현재 SOTA 모델들을 2-3개 분석 (baseline 용도)
+- 각 모델의 구조적 한계점을 파악
 
-각 sub-task별로 어떤 모델이 강한지를 찾는다.
+**Type D (adaptation):**
+- 소스 모델 1개 확보
+- 타겟 도메인에서 잘 되는 모델들을 참고 분석
 
-**Step A.2: Search per sub-task**
+**Type E (data-centric):**
+- 해당 task의 모델 1개 확보
+- 데이터 효율적 학습에 관한 모델/기법 탐색
 
-각 sub-task에 대해 검색:
-1. Semantic Scholar — title + abstract에서 해당 sub-task 언급 확인
-2. arXiv MCP — 최근 관련 논문
-3. GitHub — `gh search repos "{sub_task}" --sort=stars --limit=10`
-4. Brave Search MCP — 추가 검색
-
-**Step A.3: Per-model analysis**
-
-각 후보 모델에 대해 반드시 분석:
+**모든 유형 공통 — 모델 분석 템플릿:**
 ```
 Model: {name}
 Paper: {title} ({venue} {year})
 GitHub: {url} (stars: {N}, last commit: {date})
-
-Sub-task coverage:
-- {sub-task 1}: ✓/✗ (어떤 방식으로 해결하는지)
-- {sub-task 2}: ✓/✗
-- ...
-
-Strengths:
-- {이 모델이 잘하는 specific sub-task와 이유}
-
-Weaknesses:
-- {이 모델이 못하는 sub-task와 이유}
-
-Checkpoint:
-- Available: ✓/✗
-- Source: HuggingFace / GDrive / direct / needs training
-- Size: {GB}
-- Trained on: {dataset}
-- Compatible with target dataset: ✓/✗ (왜?)
-
-Complementarity:
-- {이 모델이 다른 후보들과 어떻게 상호보완되는지}
+Role in this project: base model / reference / baseline / component
+Strengths: {이 task에서 잘하는 것}
+Weaknesses: {한계점 — 이것이 개선 방향의 단서}
+Checkpoint: available / needs training / needs fine-tuning
 ```
 
-**Step A.4: Complementary selection**
+### Track B: 개선 방향 탐색
 
-핵심: **성능 좋은 모델 N개가 아니라, sub-task를 골고루 커버하는 조합**을 고른다.
+**이것이 프로젝트의 핵심이다.** 프로젝트 유형에 따라 찾는 것이 완전히 다르다.
 
-선택 기준 (우선순위):
-1. **Sub-task coverage** — 모든 sub-task가 최소 1개 모델로 커버되는가
-2. **Diversity** — 같은 접근법의 모델 2개보다, 다른 접근법 모델 2개가 낫다
-3. **Checkpoint availability** — pretrained 있으면 우선
-4. **Venue + recency** — 탑티어 + 최신
-5. **모델 수 제한** — objective에 따라 유동적 (단일 모델 개선이면 1-2개, 조합이 필요하면 3-6개)
+**Type A (multi-model):**
+- 조합 방법론: fusion, ensemble, stacking, etc.
+- 초기 baseline 1개 선정
 
-사용자에게 제안:
+**Type B (single-model):**
+- 해당 모델의 약점을 개선할 수 있는 기법 논문 탐색. 예시:
+  - Loss function 변경/추가 (contrastive loss, focal loss, etc.)
+  - Architecture 수정 (attention 추가, layer 변경, skip connection, etc.)
+  - Feature extraction 개선 (다른 backbone, multi-scale, etc.)
+  - Embedding 변경 (positional encoding, learned embedding, etc.)
+  - Training strategy (curriculum learning, mixup, etc.)
+  - Regularization (dropout, weight decay, etc.)
+- **어떤 기법이 필요한지는 모델의 약점에 따라 결정** — 위 예시는 가능한 방향일 뿐
+- 초기 baseline: 모델 원본 그대로 (개선 전 성능 측정)
+
+**Type C (new method):**
+- 기존 SOTA들의 공통 한계를 해결하는 방향 탐색
+- 다른 도메인에서 비슷한 문제를 해결한 기법 탐색
+- 초기 baseline: 기존 SOTA 재현
+
+**Type D (adaptation):**
+- Domain adaptation 기법: fine-tuning, adapter, prompt tuning, etc.
+- 초기 baseline: 소스 모델 zero-shot 성능
+
+**Type E (data-centric):**
+- Few-shot learning, data augmentation, self-supervised pretraining, etc.
+- 초기 baseline: 제한된 데이터로 vanilla training
+
+**모든 유형 공통 — 개선 방향 분석 템플릿:**
 ```
-## Selected Models (complementary set)
-
-| # | Model | Covers | Strength | Weakness (covered by) | Checkpoint |
-|---|-------|--------|----------|----------------------|------------|
-| 1 | ... | ... | ... | ... | ... |
-
-이 조합으로 진행할까요? 추가/제거할 모델이 있으면 알려주세요.
-```
-
-### Track B: Approach search (researcher agent, parallel)
-
-목표: objective를 달성하기 위한 **방법론/접근법**을 탐색. 어떤 종류의 approach가 필요한지는 objective에 따라 동적으로 결정.
-
-**Step B.1: Approach type 결정**
-
-Objective를 분석해서 어떤 종류의 approach가 필요한지 판단:
-```
-# 판단 기준 (예시):
-- 여러 모델의 출력을 합쳐야 하는가? → fusion/ensemble 방법론 탐색
-- 단일 모델을 개선해야 하는가? → training strategy, augmentation, architecture 개선 탐색
-- 새로운 task를 정의해야 하는가? → task formulation, loss function 탐색
-- 도메인 적응이 필요한가? → domain adaptation, transfer learning 탐색
-- 데이터가 부족한가? → few-shot, self-supervised, data augmentation 탐색
-- ...
-```
-
-approach type은 고정이 아니다 — objective에 맞게 유연하게 결정.
-
-**Step B.2: Search relevant methods**
-
-결정된 approach type에 맞춰 검색:
-1. Semantic Scholar — "{task} {approach_type}" 관련 논문
-2. arXiv MCP — 최근 관련 방법론
-3. Papers with Code — target dataset의 SOTA methods
-
-**Step B.3: Per-method analysis**
-
-각 방법론에 대해:
-```
-Method: {name}
+Improvement: {name}
 Paper: {title} ({venue} {year})
-Approach type: {determined from B.1}
-Input requirement: {이 방법이 필요로 하는 것}
-Handles imbalance: ✓/✗
-Strengths: {이 task에 왜 좋은지}
-Weaknesses: {한계}
-Applicability: {Track A의 모델들과 어떻게 결합되는지}
+What it changes: {loss / architecture / feature / training / data / ...}
+Why applicable: {우리 모델/task의 어떤 약점을 해결하는지}
+Implementation complexity: low / medium / high
+Expected impact: {근거와 함께}
+Risk: {실패할 수 있는 이유}
 ```
 
-**초기 baseline으로 쓸 방법 1개**만 정한다. 나머지는 docs/baselines.md에 기록해두고 loop에서 사용.
+모든 후보를 `docs/baselines.md`에 기록. 초기 baseline 1개만 선정, 나머지는 loop에서 순차 적용.
+
+사용자에게 연구 결과 보고:
+```
+## Research Summary
+
+### Base: {모델/코드 무엇을 쓰는지}
+### Improvement candidates (priority order):
+1. {기법} — {왜 이게 첫 번째인지}
+2. {기법} — ...
+3. ...
+
+이 방향으로 진행할까요?
+```
 
 ---
 
-## Phase 4: Download and setup models
+## Phase 4: Setup
 
-사용자가 모델 선택을 확인하면:
+사용자가 연구 결과를 확인하면:
 
-**Step 4.1: Clone**
+**Step 4.1: Clone repos**
 ```bash
 git clone {repo_url} models/{model_name}
 ```
 
 **Step 4.2: Checkpoint download**
-
-README.md를 읽고 체크포인트를 다운받는다:
 - HuggingFace: `huggingface_hub.hf_hub_download()`
 - Google Drive: `gdown`
 - Direct URL: `wget`
 - 자동화 불가능 (Baidu Pan 등): `DOWNLOAD_MANUAL.md` 작성
 
-**Step 4.3: Pretrain vs use checkpoint 판단**
-
-각 모델에 대해:
+**Step 4.3: Usage mode 판단**
 ```
-if checkpoint이 target dataset과 같은 도메인에서 학습됨:
-    → pretrained checkpoint 그대로 사용 (inference only)
+if checkpoint이 target dataset과 같은 도메인:
+    → pretrained 그대로 사용
 elif checkpoint이 있지만 도메인이 다름:
-    → fine-tune on train dataset (if training code available)
-    → 없으면 pretrained 그대로 쓰되, 성능 저하 가능성 기록
+    → fine-tune (training code 있으면)
+    → 없으면 pretrained 그대로 + 성능 저하 가능성 기록
 elif checkpoint 없음:
-    → train from scratch on train dataset (training code 필요)
-    → training code 없으면 사용자에게 보고하고 해당 모델 제외
+    → train from scratch (training code 필요)
+    → training code 없으면 사용자에게 보고
 ```
 
-**Step 4.4: Register**
-
-`models/model_registry.json`:
-```json
-{
-  "models": [
-    {
-      "name": "model_a",
-      "paper": "Paper Title...",
-      "venue": "CVPR 2024",
-      "repo": "https://github.com/...",
-      "local_path": "models/model_a",
-      "checkpoint_path": "models/model_a/checkpoints/best.pth",
-      "checkpoint_source": "huggingface",
-      "checkpoint_trained_on": "dataset_name",
-      "usage_mode": "inference|finetune|train_from_scratch",
-      "covers_subtasks": ["subtask_1", "subtask_2"],
-      "strengths": "...",
-      "weaknesses": "...",
-      "framework": "pytorch",
-      "status": "ready"
-    }
-  ]
-}
-```
+**Step 4.4: Register in `models/model_registry.json`**
 
 ---
 
 ## Phase 5: Evaluation framework (researcher agent)
 
-Hand off to researcher agent:
-
 "Objective: '{objective}'.
-Models: {from model_registry.json — include each model's strengths/weaknesses}.
-Baseline approach: {from Track B}.
+Project type: {type}.
+Models: {from model_registry.json}.
 Design evaluation metrics.
 Include sanity checks from .claude/skills/result-analyzer/sanity_checks.md.
-Pay special attention to dataset class balance — if imbalanced, primary metric
-must NOT be naive accuracy or overall AUC alone."
+Pay special attention to dataset class balance."
 
-Output: docs/eval_policy.md
+Output: `docs/eval_policy.md`
 
 ---
 
 ## Phase 6: Implement (engineer agent)
 
-Hand off to engineer agent:
-
 "Objective: '{objective}'.
-Models are in models/ (see model_registry.json).
-Baseline approach: {from Track B — include paper reference and method details}.
+Project type: {type}.
+Models: see model_registry.json.
+Baseline: {from Track B}.
 Evaluation: see docs/eval_policy.md.
 
-Implement:
-1. For each model, implement src/models/{name}_wrapper.py:
-   - load(checkpoint_path) → model
-   - predict(model, input) → output (score, feature, etc. depending on approach)
-   - Read the model's README and inference code to understand the API
-2. Implement the pipeline scripts in scripts/:
-   - What scripts are needed depends on the approach. Design the pipeline based on:
-     - The objective
-     - The baseline approach from Track B
-     - The models and their outputs
-   - Common patterns (adapt as needed):
-     - extract outputs → process → apply method → evaluate
-   - Each script should be independently runnable
-3. Implement src/methods/{baseline_method}.py — baseline approach from Track B
-4. Implement src/evaluation/metrics.py — include balanced scoring from eval_policy.md
-5. Implement scripts/run_all.sh — full pipeline from data to results
-6. Implement scripts/improve_loop.py — iterative improvement
+Implement the pipeline. What needs to be implemented depends entirely on the project type:
+
+- Type A: model wrappers → score extraction → combination method → evaluation
+- Type B: model wrapper → baseline evaluation → modification code → evaluation
+- Type C: baseline reproduction → proposed method → evaluation
+- Type D: source model wrapper → adaptation code → evaluation
+- Type E: model wrapper → data strategy → training → evaluation
+
+Design the scripts/ and src/ structure to match. Each script independently runnable.
+Implement scripts/run_all.sh and scripts/improve_loop.py.
 Tests must pass."
 
 ---
 
 ## Phase 7: Run baseline (runner agent)
 
-Hand off to runner agent:
-"Run the full pipeline via scripts/run_all.sh.
-Save results to results/runs/."
+"Run the full pipeline. Save results to results/runs/."
 
 ---
 
@@ -303,7 +284,7 @@ Verify:
 2. docs/eval_policy.md has confirmed primary metric
 3. At least 1 completed evaluation in results/
 4. models/model_registry.json has at least 1 model with status "ready"
-5. Sanity checks from result-analyzer pass on baseline results
+5. Sanity checks pass on baseline results
 
 If any fails → fix before proceeding.
 
@@ -311,45 +292,51 @@ If any fails → fix before proceeding.
 
 ## Phase 8: Autonomous improvement loop
 
+**핵심: 매 iteration마다 논문을 찾고, 그 논문의 기법을 적용한다.**
+무엇을 바꿀지는 이전 결과의 분석에서 나온다.
+
 Loop:
-1. result-analyzer: analyze results (with sanity checks)
-2. literature-scout: search for better methods/approaches
-3. method-reviser: implement next method
-4. experiment-runner: evaluate
-5. result-analyzer: compare, decide next direction
+1. **result-analyzer**: 결과 분석 + sanity checks → 현재 약점/bottleneck 파악
+2. **literature-scout**: 약점을 해결하는 논문 검색
+   - 프로젝트 유형에 따라 찾는 논문이 다름:
+     - Type A: 더 나은 조합 방법
+     - Type B: 모델의 현재 약점을 해결하는 기법 (loss, layer, feature, embedding, training 등 뭐든)
+     - Type C: 제안 방법의 약점을 보완하는 기법
+     - Type D: 더 나은 adaptation 기법
+     - Type E: 더 나은 data strategy
+   - **무엇을 찾을지를 미리 정하지 않는다.** 결과 분석에서 나온 약점이 검색 쿼리를 결정한다.
+3. **method-reviser**: 논문의 기법을 구현 (한 번에 하나씩)
+4. **experiment-runner**: 실행
+5. **result-analyzer**: 비교, 다음 방향 결정
 6. Repeat
 
-The loop follows a two-phase structure per method: **reproduce first, then improve.**
-
 #### Phase A cycle (faithful reproduction)
-1. method-reviser: implement the paper exactly as described — no modifications yet
-2. experiment-runner: run
-3. result-analyzer: check if paper's reported metric is reproduced (within 5%)
-   - If reproduction failed → diagnose and fix
-   - If reproduced → gap analysis: what does this method structurally NOT solve?
+새 기법을 적용하기 전, 해당 논문의 방법을 먼저 원본대로 재현:
+1. 논문대로 구현
+2. 실행
+3. 논문의 보고 수치와 비교 (within 5%)
+   - 재현 실패 → 엔지니어링 이슈 해결
+   - 재현 성공 → gap analysis: 이 기법이 구조적으로 못하는 건 뭔가?
 
-#### Phase B cycle (improvement)
-1. result-analyzer: identify gaps
-2. literature-scout: search for papers that address those gaps + propose synthesis
-3. method-reviser: implement the highest-ranked proposal (one modification at a time)
-4. experiment-runner: run
-5. result-analyzer: compare Phase B vs Phase A
-   - If better → make Phase B the new baseline, search for next gap
-   - If worse → revert, try next proposal
-6. repeat until stall or user interrupts
+#### Phase B cycle (적용 & 개선)
+1. 재현된 기법을 우리 프로젝트에 적용
+2. 실행 & 비교
+   - 개선됨 → 새 baseline으로 채택, 다음 약점 분석
+   - 악화됨 → revert, 다음 후보 시도
+3. 반복
 
 **Escalation triggers:**
-- stall_count >= 2: no improvement in 2+ loops
-- Same error 3+ times with identical stack trace
-- Sanity check flag fires 3+ consecutive times
-- pytest fails after code change → halt immediately
+- stall_count >= 2: 2+ loops 개선 없음
+- Same error 3+ times
+- Sanity check flag 3+ consecutive
+- pytest fails → 즉시 중단
 
 ---
 
 ## Notes
-- 모델은 성능순이 아니라 **상호보완성**으로 선택
-- approach/방법론은 objective에 따라 동적으로 결정 (fusion, training strategy, architecture 등)
-- baseline 1개로 시작, loop에서 확장
-- pretrain checkpoint 있으면 우선 사용, 없으면 학습
-- 데이터셋 불균형 문제는 eval framework에서 선제적으로 대응
-- `src/methods/`에는 objective에 맞는 방법론 구현 (fusion이든, augmentation이든, loss function이든)
+- **프로젝트 유형이 모든 것을 결정한다** — 같은 skill이지만 유형에 따라 완전히 다른 연구를 수행
+- improvement loop에서 무엇을 바꿀지는 미리 정하지 않음 — 결과 분석 + 논문 검색의 결과로 동적 결정
+- loss를 바꿀 수도, layer를 추가할 수도, feature를 바꿀 수도, 완전히 다른 접근법을 쓸 수도 있음
+- 한 번에 하나의 변경만 적용 (ablation 가능하도록)
+- pretrain checkpoint 있으면 우선 사용
+- 데이터셋 불균형은 eval framework에서 선제 대응
