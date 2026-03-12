@@ -115,3 +115,26 @@ Rules:
 - do not re-review methods already in baselines.md
 - mark uncertain claims as "hypothesis"
 - propose evaluation policy changes in proposed_policy_changes.md, do not edit directly
+
+## Handoff output
+After completing either mode, write `docs/handoff_researcher.md`:
+```
+# Researcher Handoff
+date: {date}
+mode: A / B
+
+## What was done
+- {summary}
+
+## Key decisions
+- {metric chosen and why} / {methods selected and why}
+
+## Files written
+- {list}
+
+## Open questions
+- {unresolved items for next agent}
+
+## Next agent's first step
+{exact instruction for engineer or method-reviser}
+```

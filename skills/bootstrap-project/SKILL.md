@@ -57,16 +57,30 @@ After engineer finishes and tests pass:
 Hand off to runner agent:
 "Run the baseline experiment and save results."
 
-### Phase 6: Start autonomous loop
-After the first experiment completes, immediately begin the loop without waiting for user input:
+### Phase 5.5: Safety gate — CRITICAL: DO NOT SKIP
+Before starting the autonomous loop, verify all of the following:
+1. `pytest -q` passes with 0 failures
+2. `docs/eval_policy.md` exists and has a confirmed primary metric (not TBD)
+3. `experiments/registry.json` has at least 1 completed run with a numeric metric value
+4. `experiments/reports/error_analysis.md` exists (written by result-analyzer after first run)
 
-1. result-analyzer: analyze the baseline results, write error_analysis.md
+If any check fails → fix it before proceeding. Do not start the loop on a broken baseline.
+
+### Phase 6: Start autonomous loop
+After all safety checks pass, immediately begin the loop without waiting for user input:
+
+1. result-analyzer: analyze results, write error_analysis.md and next_actions.md
 2. literature-scout: search for improvement methods based on failure patterns
 3. method-reviser: propose and implement the most promising change
 4. experiment-runner: run the updated experiment
 5. repeat from step 1
 
-Stop condition: loop continues until the user interrupts or `--no-improve-k` is reached.
+**Escalation triggers — pause loop and notify user if:**
+- stall_count ≥ 2 (no metric improvement in 2+ consecutive loops): print `[escalation] No improvement in {N} consecutive loops. Current best: {metric}. Suggested: review error_analysis.md and intervene.`
+- same error message appears in 3+ consecutive runs with identical stack trace: print `[escalation] Repeated identical failure — not making progress. Human review needed.`
+- `pytest` fails after a code change: halt immediately, do not run experiment
+
+Stop condition: loop continues until the user interrupts, escalation triggers, or `--no-improve-k` is reached.
 
 ## Notes
 - each project gets its own conda environment named after the project
