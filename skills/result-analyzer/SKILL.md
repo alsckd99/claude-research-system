@@ -20,7 +20,31 @@
 - mark uncertain claims as "hypothesis"
 - only promote a pattern to a rule after 3+ consecutive occurrences
 
-## Output
+## Output format for next_actions.md
+Use hierarchical task IDs to track action items across loop iterations:
+
+```
+# Next Actions
+
+## 1. {top-level goal}
+Status: pending / in-progress / done / blocked
+
+### 1.1 {sub-task}
+Status: pending
+Type: config-only / code-change / literature-search
+Confidence: certain / likely / hypothesis
+Detail: {what to change and why}
+
+### 1.2 {sub-task}
+...
+
+## 2. {another top-level goal}
+...
+```
+
+IDs persist across loop iterations so progress is trackable (e.g. task 1.1 done → move to 1.2 next loop).
+
+## Output files
 - experiments/reports/error_analysis.md updated
-- experiments/reports/next_actions.md updated
+- experiments/reports/next_actions.md updated (hierarchical task IDs)
 - CLAUDE.md Mutable section updated (if new rule promoted)

@@ -1,5 +1,15 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport os, json\nstate_file = 'experiments/reports/.session_state.json'\nif os.path.exists(state_file):\n    with open(state_file) as f:\n        state = json.load(f)\n    last = state.get('last_action', '')\n    loop = state.get('loop_iteration', 0)\n    metric = state.get('best_metric', 'unknown')\n    if last:\n        print(f'[session] resuming loop iteration {loop} — last: {last} — best metric: {metric}')\n\""
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -50,6 +60,16 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport os, json\nfrom datetime import datetime\nreports_dir = 'experiments/reports'\nif not os.path.isdir(reports_dir):\n    import sys; sys.exit(0)\nstate = {}\nregistry_path = 'experiments/registry.json'\nif os.path.exists(registry_path):\n    with open(registry_path) as f:\n        reg = json.load(f)\n    runs = [r for r in reg.get('runs', []) if r.get('status') == 'completed']\n    if runs:\n        best = max(runs, key=lambda r: r.get('primary_metric_value', 0.0))\n        state['best_metric'] = best.get('primary_metric_value', 'unknown')\n        state['loop_iteration'] = len(runs)\nfor fname in ['next_actions.md', 'error_analysis.md']:\n    fpath = os.path.join(reports_dir, fname)\n    if os.path.exists(fpath):\n        with open(fpath) as f:\n            state[fname] = f.read()[:500]\nstate['last_action'] = 'pre-compact save'\nstate['saved_at'] = datetime.now().isoformat()\nwith open(os.path.join(reports_dir, '.session_state.json'), 'w') as f:\n    json.dump(state, f, indent=2)\nprint('[compact] session state saved')\n\""
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -60,6 +80,10 @@
           {
             "type": "command",
             "command": "[ -f scripts/propose_next_steps.py ] && python scripts/propose_next_steps.py --auto 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport os, json\nfrom datetime import datetime\nreports_dir = 'experiments/reports'\nif not os.path.isdir(reports_dir):\n    import sys; sys.exit(0)\nstate = {}\nregistry_path = 'experiments/registry.json'\nif os.path.exists(registry_path):\n    with open(registry_path) as f:\n        reg = json.load(f)\n    runs = [r for r in reg.get('runs', []) if r.get('status') == 'completed']\n    if runs:\n        best = max(runs, key=lambda r: r.get('primary_metric_value', 0.0))\n        state['best_metric'] = best.get('primary_metric_value', 'unknown')\n        state['loop_iteration'] = len(runs)\nfor fname in ['next_actions.md', 'error_analysis.md']:\n    fpath = os.path.join(reports_dir, fname)\n    if os.path.exists(fpath):\n        with open(fpath) as f:\n            state[fname] = f.read()[:500]\nstate['last_action'] = 'session stop'\nstate['saved_at'] = datetime.now().isoformat()\nwith open(os.path.join(reports_dir, '.session_state.json'), 'w') as f:\n    json.dump(state, f, indent=2)\n\""
           }
         ]
       }
