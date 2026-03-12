@@ -5,15 +5,49 @@
 - after experiment-runner completes
 
 ## Steps
-1. Load the last 5-10 runs from experiments/registry.json
-2. Analyze performance trend (table format)
-3. Classify failure type: overfitting / instability / data issue / architecture issue / plateau
-4. Extract 2-3 root causes with confidence level noted (certain / likely / hypothesis)
-5. Derive next directions (config-only change / code change / literature search needed)
-6. Reflexion: if the same failure pattern appears in 3+ consecutive runs, promote it to a
-   learned rule in CLAUDE.md Mutable Known Failure Taxonomy section:
-   `- [rule] {pattern}: {mitigation}  # promoted {date}`
-   This prevents repeating the same mistake in future loops.
+
+### Step 1: Load and summarize runs
+Load the last 5-10 runs from experiments/registry.json. Produce a performance trend table.
+
+### Step 2: Determine run phase
+Check docs/baselines.md and the run's config to determine:
+- **Phase A run**: faithful implementation of a paper (first time this method was tried)
+- **Phase B run**: extension or modification of a previous implementation
+
+This matters for Step 3.
+
+### Step 3: Analyze gaps
+**If Phase A (paper reproduction):**
+- Compare achieved metric vs. the paper's reported number. If gap > 5%, investigate why.
+  - Data mismatch? Preprocessing difference? Missing component?
+  - If reproduction is successful (within 5%), mark as "paper reproduced" — proceed to gap analysis.
+- Gap analysis: identify what the paper explicitly does NOT address or leaves as future work.
+  - Read the paper's limitations section (docs/papers/{id}.txt if available).
+  - Look for patterns in our error cases that the paper's method structurally cannot handle.
+  - These gaps become the primary input for the next literature-scout + researcher cycle.
+
+**If Phase B (extension/hybrid):**
+- Did the modification improve over Phase A? By how much?
+- Which part of the modification drove the gain (if multiple components changed)?
+- Is there a new gap that the modification introduced?
+
+### Step 4: Classify failure type
+overfitting / instability / data issue / architecture issue / plateau / paper-gap / reproduction-failure
+
+### Step 5: Extract root causes
+2-3 root causes with confidence level (certain / likely / hypothesis)
+
+### Step 6: Derive next directions
+For each root cause, recommend one of:
+- config-only change (no code needed)
+- code change (engineering fix)
+- literature search needed (gap requires a new method)
+- synthesis opportunity (gap matches a known limitation — researcher should look for complementary paper)
+
+### Step 7: Reflexion
+If the same failure pattern appears in 3+ consecutive runs, promote it to a learned rule in
+CLAUDE.md Mutable Known Failure Taxonomy:
+`- [rule] {pattern}: {mitigation}  # promoted {date}`
 
 ## Rules
 - do not draw conclusions from 1-2 runs (minimum 3)

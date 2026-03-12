@@ -67,10 +67,11 @@ papers reviewed: {N}
 - {paper 3}
 ```
 
-### Mode B: Search for improvement methods
+### Mode B: Search for improvement methods + synthesis
 Triggered after experiment failure analysis.
 
 Read error_analysis.md and search for papers that address the identified failure modes.
+Then go beyond individual papers — identify their limitations and propose novel combinations.
 
 Files to read at session start:
 1. CLAUDE.md — project objective and constraints
@@ -99,15 +100,60 @@ Reading paper content:
     2. docs/papers/{id}.txt — extracted text via PyMuPDF (read this first)
     3. docs/papers/{id}.pdf — raw PDF, use Read tool when figures/diagrams are needed
 
+#### Step-by-step for Mode B
+
+**Step 1: Find candidate papers** (as before)
+
+**Step 2: Per-paper limitation analysis**
+For each promising paper, explicitly identify:
+- What problem does it solve well?
+- What does it NOT solve or explicitly leave as future work?
+- What assumptions does it make that may not hold in our setting?
+- What are the reported failure cases (check experiments/ablation sections)?
+
+**Step 3: Cross-paper synthesis**
+After reading 5+ papers, look for complementary pairs/triples:
+- Paper A is strong at X but weak at Y; Paper B is strong at Y — can they be combined?
+- Paper A proposes a technique that was never applied to our specific failure mode — would it transfer?
+- Two papers solve the same problem differently — is there a hybrid that gets the best of both?
+
+For each synthesis hypothesis, estimate:
+- Which of our current failure modes it addresses
+- Expected gain on primary metric (cite evidence from papers)
+- Implementation effort: low / medium / high
+- Risk: low (well-tested components) / medium / high (requires novel training)
+
+**Step 4: Rank proposals**
+Produce a ranked list of proposals (1 = highest priority):
+1. Direct paper implementations (low risk, known gain)
+2. Extensions of a single paper (medium risk, potentially higher gain)
+3. Multi-paper hybrids (higher risk, highest potential gain)
+
+Only propose hybrids if there is a clear mechanistic reason they should work together — not just "both are good papers".
+
 Output format for docs/baselines.md:
 ```
 ## Method: {name}
 - paper: {title} ({year}) — {url}
 - idea: {1-2 sentences}
+- limitations: {what this paper does NOT solve}
 - relevance: {connection to current failure mode}
 - expected gain: {based on primary metric in eval_policy.md, with evidence}
 - implementation effort: low / medium / high
 - compute cost: within budget / over budget
+```
+
+Output format for docs/synthesis_proposals.md:
+```
+## Proposal {N}: {descriptive name}
+type: extension / hybrid / novel-application
+papers: [{paper A}, {paper B}, ...]
+hypothesis: {why combining these should work — mechanistic reasoning}
+addresses failure mode: {from error_analysis.md}
+expected gain: {estimate with evidence}
+effort: low / medium / high
+risk: low / medium / high
+novel contribution: {what is genuinely new vs. what is taken directly from papers}
 ```
 
 Rules:
@@ -115,6 +161,8 @@ Rules:
 - do not re-review methods already in baselines.md
 - mark uncertain claims as "hypothesis"
 - propose evaluation policy changes in proposed_policy_changes.md, do not edit directly
+- a synthesis proposal must cite mechanistic evidence — "both methods are good" is not sufficient
+- the synthesis_proposals.md file is the primary input for method-reviser
 
 ## Handoff output
 After completing either mode, write `docs/handoff_researcher.md`:

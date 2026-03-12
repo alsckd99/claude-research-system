@@ -67,16 +67,34 @@ Before starting the autonomous loop, verify all of the following:
 If any check fails → fix it before proceeding. Do not start the loop on a broken baseline.
 
 ### Phase 6: Start autonomous loop
-After all safety checks pass, immediately begin the loop without waiting for user input:
+After all safety checks pass, immediately begin the loop without waiting for user input.
 
-1. result-analyzer: analyze results, write error_analysis.md and next_actions.md
-2. literature-scout: search for improvement methods based on failure patterns
-3. method-reviser: propose and implement the most promising change
-4. experiment-runner: run the updated experiment
-5. repeat from step 1
+The loop follows a two-phase structure per method: **reproduce first, then improve.**
+
+#### Phase A cycle (faithful reproduction)
+Repeat for each new method from literature-scout:
+1. method-reviser: implement the paper exactly as described — no modifications yet
+2. experiment-runner: run
+3. result-analyzer: check if paper's reported metric is reproduced (within 5%)
+   - If reproduction failed → diagnose and fix (engineering issue, not a new method)
+   - If reproduced → gap analysis: what does this method structurally NOT solve?
+
+#### Phase B cycle (improvement)
+After Phase A succeeds for a method:
+1. result-analyzer: identify gaps — failure modes the paper cannot address
+2. researcher (Mode B): search for papers that address those gaps + propose synthesis
+3. method-reviser: implement the highest-ranked synthesis proposal
+   - Keep the Phase A implementation behind a config flag
+   - One modification at a time
+4. experiment-runner: run
+5. result-analyzer: compare Phase B vs Phase A metric
+   - If better → make Phase B the new baseline, search for next gap
+   - If worse → revert via config flag, try next proposal
+6. repeat Phase B from step 1 until stall or user interrupts
 
 **Escalation triggers — pause loop and notify user if:**
-- stall_count ≥ 2 (no metric improvement in 2+ consecutive loops): print `[escalation] No improvement in {N} consecutive loops. Current best: {metric}. Suggested: review error_analysis.md and intervene.`
+- stall_count ≥ 2 (no metric improvement in 2+ consecutive Phase B loops): print `[escalation] No improvement in {N} consecutive loops. Current best: {metric}. Suggested: review error_analysis.md and intervene.`
+- Phase A reproduction consistently fails (3+ attempts): print `[escalation] Cannot reproduce paper baseline — data or environment issue likely. Human review needed.`
 - same error message appears in 3+ consecutive runs with identical stack trace: print `[escalation] Repeated identical failure — not making progress. Human review needed.`
 - `pytest` fails after a code change: halt immediately, do not run experiment
 
