@@ -118,6 +118,7 @@ cp "${SCRIPT_DIR}/skills/bootstrap-project/SKILL.md"  "${CLAUDE_DIR}/skills/boot
 cp "${SCRIPT_DIR}/skills/literature-scout/SKILL.md"   "${CLAUDE_DIR}/skills/literature-scout/"
 cp "${SCRIPT_DIR}/skills/experiment-runner/SKILL.md"  "${CLAUDE_DIR}/skills/experiment-runner/"
 cp "${SCRIPT_DIR}/skills/result-analyzer/SKILL.md"    "${CLAUDE_DIR}/skills/result-analyzer/"
+cp "${SCRIPT_DIR}/skills/result-analyzer/sanity_checks.md" "${CLAUDE_DIR}/skills/result-analyzer/"
 cp "${SCRIPT_DIR}/skills/method-reviser/SKILL.md"     "${CLAUDE_DIR}/skills/method-reviser/"
 cp "${SCRIPT_DIR}/skills/policy-evolver/SKILL.md"     "${CLAUDE_DIR}/skills/policy-evolver/"
 
