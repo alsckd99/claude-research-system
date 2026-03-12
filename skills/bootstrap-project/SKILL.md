@@ -29,15 +29,26 @@ Impact: {기존 계획에서 무엇이 바뀌는지}
 
 ---
 
+## Phase 0: System check (프로젝트 시작 전)
+
+프로젝트 작업에 앞서:
+
+1. **system-updater skill 실행** — Claude Code / API / MCP 최신 업데이트 확인
+   - 반영할 것이 있으면 사용자에게 제안 → 승인 시 적용
+   - 없으면 그대로 진행
+2. **GPU 확인** — `nvidia-smi`로 사용 가능한 GPU 목록과 메모리 상태를 보여주고, 어떤 GPU를 쓸지 사용자에게 질문
+
+---
+
 ## Phase 1: Collect info
 
 사용자에게 질문:
 1. **Objective** — 한 문장
 2. **Train dataset** — 학습에 쓸 데이터 경로 또는 이름
 3. **Test dataset** — 평가에 쓸 데이터 경로 또는 이름 (train과 같을 수 있음)
-4. **GPU** — 사용 가능한 GPU (예: 0 / 0,1 / all / cpu)
 
 질문하지 않는 것: 모델, metric, 방법론 (전부 자동 탐색)
+GPU는 Phase 0에서 이미 확인했으므로 다시 묻지 않는다.
 
 ---
 
