@@ -109,6 +109,7 @@ mkdir -p "${CLAUDE_DIR}/skills/policy-evolver"
 mkdir -p "${CLAUDE_DIR}/skills/data-auditor"
 mkdir -p "${CLAUDE_DIR}/skills/ablation-planner"
 mkdir -p "${CLAUDE_DIR}/skills/report-writer"
+mkdir -p "${CLAUDE_DIR}/skills/system-updater"
 mkdir -p "${CLAUDE_DIR}/hooks"
 
 cp "${SCRIPT_DIR}/agents/researcher.md"     "${CLAUDE_DIR}/agents/"
@@ -128,6 +129,7 @@ cp "${SCRIPT_DIR}/skills/policy-evolver/SKILL.md"     "${CLAUDE_DIR}/skills/poli
 cp "${SCRIPT_DIR}/skills/data-auditor/SKILL.md"      "${CLAUDE_DIR}/skills/data-auditor/"
 cp "${SCRIPT_DIR}/skills/ablation-planner/SKILL.md"  "${CLAUDE_DIR}/skills/ablation-planner/"
 cp "${SCRIPT_DIR}/skills/report-writer/SKILL.md"     "${CLAUDE_DIR}/skills/report-writer/"
+cp "${SCRIPT_DIR}/skills/system-updater/SKILL.md"   "${CLAUDE_DIR}/skills/system-updater/"
 
 cp "${SCRIPT_DIR}/hooks/hooks.json" "${CLAUDE_DIR}/hooks/"
 
