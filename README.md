@@ -14,6 +14,11 @@ git clone https://github.com/alsckd99/claude-research-system ~/claude-research-s
 bash ~/claude-research-system/install.sh /path/to/your/project
 ```
 
+Already cloned? Pull the latest:
+```bash
+cd ~/claude-research-system && git pull
+```
+
 This writes agents/skills/hooks only into `your-project/.claude/` — other projects and `~/.claude/` are not touched.
 
 ---
