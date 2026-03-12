@@ -11,14 +11,18 @@ Do not start an experiment if tests fail.
 Config validation 스크립트가 있으면 함께 실행.
 
 ## Output layout
-실험 결과는 per-run 디렉토리에 저장:
+실험 결과는 per-run 디렉토리에 저장. 각 run이 완전한 기록이 되어야 한다:
 ```
 results/runs/{YYYYMMDD_HHMMSS}/
 ├── metrics.json
 ├── config_snapshot.yaml
 ├── git_commit.txt
 ├── stdout.log
-└── ...  (프로젝트에 따라 추가 파일)
+├── plots/                    # 시각화 (experiment-runner가 생성)
+└── analysis/                 # 분석 기록 (result-analyzer가 생성)
+    ├── sanity_checks.json
+    ├── deep_analysis.md
+    └── debug_findings.md
 ```
 
 ## Required fields in metrics.json

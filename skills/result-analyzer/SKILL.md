@@ -117,8 +117,36 @@ Confidence: certain / likely / hypothesis
 Detail: {what to change and why}
 ```
 
-## Output files
-- results/ reports updated (error_analysis, next_actions)
-- results/runs/{latest}/plots/ — 추가 분석 시각화 (필요시 생성)
+## Logging — 모든 분석 결과는 해당 run에 저장
+
+분석 결과는 **해당 run 디렉토리 안에** 남긴다. 나중에 어떤 run에서 무슨 분석을 했는지 추적 가능해야 한다.
+
+```
+results/runs/{timestamp}/analysis/
+├── sanity_checks.json        # 각 check의 pass/fail + flag 내용
+├── deep_analysis.md          # Step 4 코드/값 분석 전체 기록
+├── debug_findings.md         # 발견된 버그/문제 + fix 제안
+├── gap_analysis.md           # Phase A/B gap 분석
+└── plots/                    # 분석 중 추가 생성한 시각화
+```
+
+`sanity_checks.json` 예시:
+```json
+{
+  "run_id": "{timestamp}",
+  "checks": {
+    "class_imbalance": {"status": "pass"},
+    "threshold_sensitivity": {"status": "flag", "detail": "..."},
+    "degenerate_predictions": {"status": "pass"}
+  },
+  "flags_fired": 1,
+  "consecutive_flag_count": {"threshold_sensitivity": 2}
+}
+```
+
+## Output files (summary level)
+- results/runs/{latest}/analysis/ — 이 run의 분석 기록 (위 참고)
+- results/reports/error_analysis.md — 최신 분석 요약 (전체 run 걸쳐)
+- results/reports/next_actions.md — 다음 할 일
 - CLAUDE.md Mutable section updated (if new rule promoted)
 - docs/eval_policy.md updated (if sanity check promoted to hard constraint)

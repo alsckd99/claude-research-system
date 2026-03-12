@@ -44,6 +44,22 @@ matplotlib이 없거나 시각화 불가능한 경우 skip — 실험 자체를 
 ## Post-run: 분석 스크립트
 프로젝트에 분석 스크립트가 있으면 실행.
 
-## Output
-- results/runs/{timestamp}/ saved (metrics.json, config_snapshot.yaml, plots/, etc.)
-- results/registry.json updated
+## Output layout
+모든 결과물은 해당 run 디렉토리에 저장한다. run 하나가 완전한 기록이 되어야 한다.
+
+```
+results/runs/{timestamp}/
+├── metrics.json              # primary/secondary metric 값
+├── config_snapshot.yaml      # 이 run에 사용된 config 복사본
+├── git_commit.txt            # 코드 버전
+├── stdout.log                # 전체 stdout/stderr
+├── plots/                    # 시각화
+│   ├── ...
+│   └── ...
+└── analysis/                 # result-analyzer가 생성 (post-run)
+    ├── sanity_checks.json    # 어떤 check가 통과/실패했는지
+    ├── deep_analysis.md      # 코드/값 수준 분석 결과
+    └── debug_findings.md     # 발견된 문제와 fix 제안
+```
+
+- results/registry.json도 함께 업데이트
