@@ -15,7 +15,7 @@
 결과를 분석하다가 논문에서 본 기법이 떠오르면 그걸 적용한다.
 모델을 세팅하다가 README에서 관련 논문을 발견하면 그것도 후보에 넣는다.
 
-**어느 단계에서든 새 발견이 있으면 기존 계획을 수정한다.**
+어느 단계에서든 새 발견이 있으면 기존 계획을 수정한다.
 변경 시 `docs/research_log.md`에 기록:
 ```
 ## {date} — Direction change
@@ -24,8 +24,8 @@ Found: {무엇을 발견했는지}
 Impact: {기존 계획에서 무엇이 바뀌는지}
 ```
 
-아래 Phase 1~7은 **최초 셋업 순서**이다. 한번 loop에 진입하면 순서는 의미 없고,
-분석 → 탐색 → 구현 → 실험이 유기적으로 반복된다.
+아래 Phase 0~7은 최초 셋업 순서이다. 한번 loop에 진입하면 순서는 의미 없고,
+분석, 탐색, 구현, 실험이 유기적으로 반복된다.
 
 ---
 
@@ -33,19 +33,19 @@ Impact: {기존 계획에서 무엇이 바뀌는지}
 
 프로젝트 작업에 앞서:
 
-1. **system-updater skill 실행** — Claude Code / API / MCP 최신 업데이트 확인
-   - 반영할 것이 있으면 사용자에게 제안 → 승인 시 적용
+1. system-updater skill 실행 — Claude Code / API / MCP 최신 업데이트 확인
+   - 반영할 것이 있으면 사용자에게 제안, 승인 시 적용
    - 없으면 그대로 진행
-2. **GPU 확인** — `nvidia-smi`로 사용 가능한 GPU 목록과 메모리 상태를 보여주고, 어떤 GPU를 쓸지 사용자에게 질문
+2. GPU 확인 — `nvidia-smi`로 사용 가능한 GPU 목록과 메모리 상태를 보여주고, 어떤 GPU를 쓸지 사용자에게 질문
 
 ---
 
 ## Phase 1: Collect info
 
 사용자에게 질문:
-1. **Objective** — 한 문장
-2. **Train dataset** — 학습에 쓸 데이터 경로 또는 이름
-3. **Test dataset** — 평가에 쓸 데이터 경로 또는 이름 (train과 같을 수 있음)
+1. Objective — 한 문장
+2. Train dataset — 학습에 쓸 데이터 경로 또는 이름
+3. Test dataset — 평가에 쓸 데이터 경로 또는 이름 (train과 같을 수 있음)
 
 질문하지 않는 것: 모델, metric, 방법론 (전부 자동 탐색)
 GPU는 Phase 0에서 이미 확인했으므로 다시 묻지 않는다.
@@ -59,7 +59,7 @@ Objective를 바탕으로 첫 탐색을 수행한다.
 1. 관련 논문/모델/기법을 검색
 2. 찾은 논문을 읽으면서 추가로 참조된 기법이나 모델이 있으면 그것도 따라간다
 3. 탐색 결과를 바탕으로 프로젝트의 출발점과 방향을 정리
-4. **데이터 감사** — data-auditor skill로 데이터셋 분석 (분포, 불균형, 품질, leakage)
+4. 데이터 감사 — data-auditor skill로 데이터셋 분석 (분포, 불균형, 품질, leakage)
    - 결과는 Phase 4 eval_policy 설계에 반영
 
 사용자에게 보고:
@@ -87,11 +87,11 @@ Objective를 바탕으로 첫 탐색을 수행한다.
 
 사용자 확인 후:
 
-1. **Project structure 생성** — `src/` 구조는 연구 결과에 맞게 자유롭게 결정
-2. **Clone repos & download checkpoints**
-3. **Usage mode 판단**: pretrained 그대로 / fine-tune / train from scratch
-4. **Register**: `models/model_registry.json`
-5. **conda 환경 생성**
+1. Project structure 생성 — `src/` 구조는 연구 결과에 맞게 자유롭게 결정
+2. Clone repos & download checkpoints
+3. Usage mode 판단: pretrained 그대로 / fine-tune / train from scratch
+4. Register: `models/model_registry.json`
+5. conda 환경 생성
 
 셋업 중 README, 코드, 논문 등에서 새 발견이 있으면 Phase 2 결과를 수정한다.
 
@@ -125,29 +125,29 @@ Runner agent:
 3. At least 1 completed evaluation in results/
 4. Sanity checks pass on baseline results
 
-If any fails → fix before proceeding.
+If any fails, fix before proceeding.
 
 ---
 
 ## Phase 7: Improvement loop
 
 매 iteration:
-1. **분석**: 결과 + sanity checks → 현재 약점
-2. **탐색**: 약점을 해결하는 논문 검색
+1. 분석: 결과 + sanity checks로 현재 약점 파악
+2. 탐색: 약점을 해결하는 논문 검색
    - 논문을 읽다가 다른 유용한 기법을 발견하면 그것도 후보에 추가
    - 관련 논문의 reference를 따라가다 더 좋은 접근을 발견할 수 있음
-3. **구현**: 한 번에 하나씩 적용
-4. **실행**: 실험
-5. **비교**: 개선됨 → 새 baseline / 악화됨 → revert, 다음 후보
+3. 구현: 한 번에 하나씩 적용
+4. 실행: 실험
+5. 비교: 개선됨이면 새 baseline / 악화됨이면 revert, 다음 후보
 6. Repeat
 
 새 기법 적용 시 가능하면 해당 논문의 방법을 먼저 원본대로 재현 (within 5%) 후 적용.
 
-**Escalation triggers:**
+Escalation triggers:
 - 2+ loops 개선 없음
 - Same error 3+ times
 - Sanity check flag 3+ consecutive
-- pytest fails → 즉시 중단
+- pytest fails시 즉시 중단
 
 ---
 

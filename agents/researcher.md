@@ -81,24 +81,24 @@ Search sources (use what's effective, order is a suggestion not a requirement):
 Reading paper content:
 - Abstract and metadata: from search APIs
 - Full text (HTML): fetch `https://ar5iv.labs.arxiv.org/html/{arxiv_id}`
-- PDF: `python scripts/fetch_paper.py {arxiv_id}` → `docs/papers/{id}.txt`
+- PDF: `python scripts/fetch_paper.py {arxiv_id}` then `docs/papers/{id}.txt`
 
 #### Steps for Mode B
 
-**Step 1: Find candidate papers**
+Step 1: Find candidate papers
 
-**Step 2: Per-paper analysis**
+Step 2: Per-paper analysis
 For each promising paper:
 - What problem does it solve well?
 - What does it NOT solve or leave as future work?
 - What assumptions does it make?
 - Reported failure cases?
-- **논문에서 사용/참조한 다른 기법 중 우리 프로젝트에 유용한 것이 있는가?** → 있으면 추가 탐색
+- 논문에서 사용/참조한 다른 기법 중 우리 프로젝트에 유용한 것이 있는가? 있으면 추가 탐색
 
-**Step 3: Cross-paper synthesis**
+Step 3: Cross-paper synthesis
 Look for complementary combinations. Only propose when there is a clear mechanistic reason.
 
-**Step 4: Rank proposals**
+Step 4: Rank proposals
 Ranking criteria: 근거 강도, 구현 난이도, 예상 효과.
 
 Output format for docs/baselines.md:

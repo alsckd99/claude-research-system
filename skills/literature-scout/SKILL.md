@@ -20,18 +20,18 @@ Find recent papers and methods related to current failure patterns.
 
 4. Search in order:
 
-   **Semantic Scholar** (use fetch MCP — includes venue and citation count):
+   Semantic Scholar (use fetch MCP — includes venue and citation count):
    - https://api.semanticscholar.org/graph/v1/paper/search?query={q}&fields=title,abstract,year,citationCount,url,venue,externalIds&limit=20
-   - Sort results: top-tier venue → recency → citation count
+   - Sort results: top-tier venue, recency, citation count
 
-   **arXiv MCP** (for recent preprints, last 3 years):
+   arXiv MCP (for recent preprints, last 3 years):
    - `search_papers(query, max_results=20)` then filter by year
    - `download_paper(paper_id)` / `read_paper(paper_id)` for full text
 
-   **OpenAlex** (supplement, use fetch MCP):
+   OpenAlex (supplement, use fetch MCP):
    - https://api.openalex.org/works?search={q}&sort=cited_by_count:desc&per-page=10&select=title,authorships,publication_year,doi,open_access,cited_by_count,abstract_inverted_index
 
-   **Brave Search MCP** (if available): benchmark leaderboards, GitHub repos, official docs
+   Brave Search MCP (if available): benchmark leaderboards, GitHub repos, official docs
 
 5. For promising papers found via Semantic Scholar or OpenAlex, download via arXiv MCP if arXiv ID is available
 6. Add top 3-5 methods to docs/baselines.md in standard format

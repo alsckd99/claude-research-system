@@ -26,7 +26,7 @@ Full: {모든 변경을 포함한 버전}
 ### Step 2: 실험 설계
 어떤 조합을 테스트할지 결정:
 
-**기본 전략: leave-one-out**
+기본 전략: leave-one-out
 - Full (A+B+C)
 - Full - A (B+C만)
 - Full - B (A+C만)
@@ -56,7 +56,7 @@ Component가 많으면 (4개+) 중요도 순으로 우선순위를 매겨서 핵
 ### Step 4: 결과 분석 가이드
 ablation 실행 후 분석 기준:
 - 각 component의 개별 기여도 = Full - (Full - component)
-- 기여도가 없거나 음수인 component → 제거 검토
+- 기여도가 없거나 음수인 component는 제거 검토
 - Component 간 상호작용: A+B > A + B 개별 기여 합이면 시너지
 
 ## Output
