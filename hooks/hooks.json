@@ -9,7 +9,7 @@
           },
           {
             "type": "command",
-            "command": "python3 -c \"\nimport os, json\nfrom datetime import datetime, timedelta\nlog_file = 'docs/update_log.md'\nlast_check = None\nif os.path.exists(log_file):\n    with open(log_file) as f:\n        for line in f:\n            if line.startswith('## 20'):\n                try:\n                    date_str = line.split(' — ')[0].replace('## ', '').strip()\n                    last_check = datetime.strptime(date_str, '%Y-%m-%d')\n                except: pass\nnow = datetime.now()\nif last_check is None or (now - last_check) > timedelta(days=7):\n    days = (now - last_check).days if last_check else 'never'\n    print(f'[system-updater] last update check: {days} days ago — run system-updater skill to check for Claude Code updates')\n\""
+            "command": "python3 -c \"\nimport os, json\nfrom datetime import datetime, timedelta\nlog_file = 'docs/update_log.md'\nlast_check = None\nif os.path.exists(log_file):\n    with open(log_file) as f:\n        for line in f:\n            if line.startswith('## 20'):\n                try:\n                    date_str = line.split(' — ')[0].replace('## ', '').strip()\n                    last_check = datetime.strptime(date_str, '%Y-%m-%d')\n                except: pass\nnow = datetime.now()\nif last_check is None or (now - last_check) > timedelta(days=1):\n    days = (now - last_check).days if last_check else 'never'\n    print(f'[system-updater] last update check: {days} days ago — run system-updater skill to check for Claude Code updates')\n\""
           }
         ]
       }
