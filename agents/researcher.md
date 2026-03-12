@@ -18,10 +18,16 @@ Triggered when docs/eval_policy.md is empty or missing.
 Read CLAUDE.md to understand the project objective and domain.
 Search for papers on the task and determine the standard evaluation approach.
 
+Paper priority (apply to all searches):
+- Recency: prefer papers from the last 3 years. Earlier papers only if foundational or widely cited.
+- Venue: top-tier venues first — NeurIPS, ICML, ICLR, CVPR, ICCV, ECCV, ACL, EMNLP, NAACL, SIGKDD, AAAI, IJCAI, TPAMI, IJCV, JMLR
+- Citation count: for older papers (3+ years), prefer citationCount > 50
+- Reject: workshop papers, arXiv-only with < 5 citations and > 1 year old, unless nothing better exists
+
 Steps:
 1. Identify the task type from the project objective (classification, detection, generation, regression, etc.)
 2. Search for at least 10 papers on the task via Semantic Scholar and arXiv.
-   If benchmark leaderboards or dataset pages are needed, supplement with Brave Search MCP.
+   Filter by recency and venue. If benchmark leaderboards or dataset pages are needed, supplement with Brave Search MCP.
 3. Find which metrics papers commonly report
 4. Select one primary metric using these criteria:
    - used in 80%+ of papers on the task
@@ -72,9 +78,16 @@ Files to read at session start:
 3. experiments/reports/error_analysis.md — failure patterns
 4. docs/baselines.md — already reviewed methods
 
-Search order (use in priority):
-1. Semantic Scholar: https://api.semanticscholar.org/graph/v1/paper/search?query={q}&fields=title,abstract,year,citationCount,url&limit=10
-2. arXiv: http://export.arxiv.org/api/query?search_query=all:{q}&sortBy=submittedDate&sortOrder=descending&max_results=10
+Paper priority (apply to all searches):
+- Recency: prefer last 3 years. Earlier only if foundational or heavily cited.
+- Venue: top-tier first — NeurIPS, ICML, ICLR, CVPR, ICCV, ECCV, ACL, EMNLP, NAACL, SIGKDD, AAAI, IJCAI, TPAMI, IJCV, JMLR
+- Citation count: for papers 3+ years old, prefer citationCount > 50
+- Reject: workshop-only, arXiv-only with < 5 citations and > 1 year old (unless nothing better exists)
+
+Search order:
+1. Semantic Scholar: https://api.semanticscholar.org/graph/v1/paper/search?query={q}&fields=title,abstract,year,citationCount,url,venue,externalIds&limit=20
+   → sort results by: top-tier venue first, then recency, then citation count
+2. arXiv MCP: search_papers(query, max_results=20), filter to last 3 years
 3. OpenAlex (supplement): https://api.openalex.org/works?search={q}&sort=cited_by_count:desc&per-page=10&select=title,authorships,publication_year,doi,open_access,cited_by_count,abstract_inverted_index
 4. Brave Search MCP (if available): GitHub repos, official docs, Stack Overflow, benchmark leaderboards, dataset pages
 

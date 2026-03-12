@@ -12,24 +12,30 @@ Find recent papers and methods related to current failure patterns.
 1. Read error_analysis.md and baselines.md to understand current state
 2. Convert failure patterns into search queries
 
-3. Search in order:
+3. Paper priority — apply before selecting candidates:
+   - Prefer papers from the last 3 years
+   - Top-tier venues first: NeurIPS, ICML, ICLR, CVPR, ICCV, ECCV, ACL, EMNLP, NAACL, SIGKDD, AAAI, IJCAI, TPAMI, IJCV, JMLR
+   - For papers 3+ years old: citationCount > 50 required
+   - Skip: workshop-only or arXiv-only with < 5 citations and > 1 year old
 
-   **arXiv** (use arxiv MCP tools — more token-efficient than HTTP fetch):
-   - `search_papers(query, max_results=10)` — returns structured results with IDs
-   - `download_paper(paper_id)` — downloads PDF locally
-   - `read_paper(paper_id)` — reads full text including figures and tables
+4. Search in order:
 
-   **Semantic Scholar** (use fetch MCP — HTTP call):
-   - https://api.semanticscholar.org/graph/v1/paper/search?query={q}&fields=title,abstract,year,citationCount,url&limit=10
+   **Semantic Scholar** (use fetch MCP — includes venue and citation count):
+   - https://api.semanticscholar.org/graph/v1/paper/search?query={q}&fields=title,abstract,year,citationCount,url,venue,externalIds&limit=20
+   - Sort results: top-tier venue → recency → citation count
+
+   **arXiv MCP** (for recent preprints, last 3 years):
+   - `search_papers(query, max_results=20)` then filter by year
+   - `download_paper(paper_id)` / `read_paper(paper_id)` for full text
 
    **OpenAlex** (supplement, use fetch MCP):
    - https://api.openalex.org/works?search={q}&sort=cited_by_count:desc&per-page=10&select=title,authorships,publication_year,doi,open_access,cited_by_count,abstract_inverted_index
 
-   **Brave Search MCP** (if available): for GitHub repos, official docs, benchmark leaderboards
+   **Brave Search MCP** (if available): benchmark leaderboards, GitHub repos, official docs
 
-4. For promising papers found via Semantic Scholar or OpenAlex, download via arXiv MCP if arXiv ID is available
-5. Add top 3-5 methods to docs/baselines.md in standard format
-6. Add new metric or test candidates to proposed_policy_changes.md
+5. For promising papers found via Semantic Scholar or OpenAlex, download via arXiv MCP if arXiv ID is available
+6. Add top 3-5 methods to docs/baselines.md in standard format
+7. Add new metric or test candidates to proposed_policy_changes.md
 
 ## Note on token efficiency
 arXiv MCP provides structured tool calls (no XML parsing, no manual HTTP construction).
