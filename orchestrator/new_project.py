@@ -133,6 +133,9 @@ def create_project(name: str, objective: str, gpus: str, project_dir: Path) -> N
     (project_dir / "docs" / "research_log.md").write_text(
         "# Research Log\n\n_Direction changes and discoveries are recorded here._\n"
     )
+    (project_dir / "docs" / "model_selection_log.md").write_text(
+        "# Model Selection Log\n\n_Each model selection with reasoning is recorded here._\n"
+    )
     print("  [created] docs/")
 
     # results/
