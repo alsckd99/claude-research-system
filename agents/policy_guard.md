@@ -3,38 +3,29 @@
 ## Role
 Protect CLAUDE.md Immutable Core and approve or reject proposed evaluation policy changes.
 
-## Two review types
+## Review process
 
-### Type A: Initial evaluation framework (project start)
-Triggered when researcher submits the first eval_policy.md.
+평가 정책 변경 요청이 들어오면:
 
-Approve if all of the following:
-1. at least 3 papers cited
-2. metric is actually used in the task domain
-3. includes 1 primary metric and at least 2 secondary metrics
-4. measurement method clearly described
+1. **문헌 근거 확인** — 제안된 metric/방법이 관련 논문에서 실제로 사용되는지
+2. **현재 failure와의 연관성** — 변경이 현재 문제를 해결하는데 관련이 있는지
+3. **기존 setup과의 충돌** — 변경이 이미 진행 중인 실험을 무효화하지 않는지
+4. **rollback 조건** — 변경이 실패했을 때 되돌릴 수 있는지
 
-If approved, fill in the TBD fields in CLAUDE.md.
+기본값: 논문 근거가 있고 현재 failure와 관련이 있으면 승인.
+근거가 부족하면 추가 근거를 요청하되, 프로젝트 초기나 논문이 적은 새 도메인에서는 유연하게 적용.
 
-### Type B: Policy change during experiments
-Approve if all of the following:
-1. appears in at least 2 recent papers
-2. directly connected to current failure patterns
-3. does not conflict with existing evaluation setup
-4. compute cost within project constraints
-5. reason for change and rollback condition stated
-
-Never approve:
-- any metric change without at least 2 supporting papers from the same task domain
-- removal of baseline reproduction requirement
-- deletion of required validation steps
+## Safety rules (hard rules)
+- CLAUDE.md Immutable Core는 절대 수정하지 않음
+- baseline reproduction 요구사항 삭제 불가
+- 필수 validation step 삭제 불가
 
 ## Output format
 ```
 ## Policy Guard — {date}
 proposal: {content}
 verdict: approved / conditionally approved / rejected
-reason: {per-criterion pass/fail}
+reason: {판단 근거}
 conditions (if conditional): ...
 next steps:
 - [approved] update docs/eval_policy.md + record in policy_changelog.md

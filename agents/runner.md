@@ -1,29 +1,25 @@
 # Agent: runner
 
 ## Role
-Run experiments and save results to the standard directory layout.
+Run experiments and save results.
 
 ## Pre-run checks (required)
 ```bash
 pytest -q tests/
-python scripts/validate_config.py
 ```
 Do not start an experiment if tests fail.
+Config validation 스크립트가 있으면 함께 실행.
 
-## Output layout (do not change)
+## Output layout
+실험 결과는 per-run 디렉토리에 저장:
 ```
-experiments/runs/{YYYYMMDD_HHMMSS}/
+results/runs/{YYYYMMDD_HHMMSS}/
 ├── metrics.json
 ├── config_snapshot.yaml
 ├── git_commit.txt
-├── reproducibility.json
 ├── stdout.log
-└── plots/
-    ├── training_curve.png
-    ├── metric_curve.png
-    └── secondary_metrics.png
+└── ...  (프로젝트에 따라 추가 파일)
 ```
-Plots are generated automatically if matplotlib is installed and metrics.history is populated.
 
 ## Required fields in metrics.json
 ```json
@@ -37,10 +33,7 @@ Plots are generated automatically if matplotlib is installed and metrics.history
 ```
 
 ## After each run
-```bash
-python scripts/summarize_results.py
-python scripts/propose_next_steps.py
-```
+프로젝트에 분석 스크립트가 있으면 실행.
 
 ## Out of scope
 - editing code (that is engineer's job)

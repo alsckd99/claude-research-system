@@ -25,19 +25,14 @@ Paper priority (apply to all searches):
 - Reject: workshop papers, arXiv-only with < 5 citations and > 1 year old, unless nothing better exists
 
 Steps:
-1. Identify the task type from the project objective (classification, detection, generation, regression, etc.)
-2. Search for at least 10 papers on the task via Semantic Scholar and arXiv.
-   Filter by recency and venue. If benchmark leaderboards or dataset pages are needed, supplement with Brave Search MCP.
-3. Find which metrics papers commonly report
-4. Select one primary metric using these criteria:
-   - used in 80%+ of papers on the task
-   - prefer AUROC/F1 over accuracy when classes are imbalanced
-   - include latency for real-time systems
-   - use domain-standard metrics for generation tasks (FID, FVD, SSIM, etc.)
-5. Select 2-4 secondary metrics
+1. Objective를 분석해서 어떤 task인지 파악
+2. 관련 논문 검색 (최소 10편 목표, 도메인에 따라 유동적)
+3. 논문들이 공통으로 사용하는 metric 파악
+4. Primary metric 선정 — 해당 도메인에서 가장 널리 쓰이는 metric. 데이터 특성(불균형, 분포 등)을 고려해서 적절한 metric 판단.
+5. Secondary metrics 선정 — 개수는 프로젝트에 따라 유동적
 6. Write docs/eval_policy.md
 7. Fill in the Primary Metric field in CLAUDE.md Mutable Research Policy
-8. Ask policy_guard to review (auto-approve if 3+ papers cited)
+8. Ask policy_guard to review
 
 Output format for docs/eval_policy.md:
 ```
@@ -47,24 +42,20 @@ papers reviewed: {N}
 
 ## Primary Metric
 {metric name}
-- why: {used in N papers on this task, with citations}
+- why: {논문 근거}
 - how to measure: {calculation details}
 - target: {SOTA level or improvement over baseline}
 
 ## Secondary Metrics
 | metric | reason | target |
 |--------|--------|--------|
-| {metric} | {source} | {goal} |
 
 ## Protocol
 - seed: 42
-- data split: {standard split for this task}
+- data split: {논문에서 확인한 standard split, 없으면 적절히 판단}
 - minimum runs: 3, report mean
 
 ## References
-- {paper 1}
-- {paper 2}
-- {paper 3}
 ```
 
 ### Mode B: Search for improvement methods + synthesis
@@ -79,57 +70,36 @@ Files to read at session start:
 3. experiments/reports/error_analysis.md — failure patterns
 4. docs/baselines.md — already reviewed methods
 
-Paper priority (apply to all searches):
-- Recency: prefer last 3 years. Earlier only if foundational or heavily cited.
-- Venue: top-tier first — NeurIPS, ICML, ICLR, CVPR, ICCV, ECCV, ACL, EMNLP, NAACL, SIGKDD, AAAI, IJCAI, TPAMI, IJCV, JMLR
-- Citation count: for papers 3+ years old, prefer citationCount > 50
-- Reject: workshop-only, arXiv-only with < 5 citations and > 1 year old (unless nothing better exists)
+Paper priority: same as Mode A.
 
-Search order:
-1. Semantic Scholar: https://api.semanticscholar.org/graph/v1/paper/search?query={q}&fields=title,abstract,year,citationCount,url,venue,externalIds&limit=20
-   → sort results by: top-tier venue first, then recency, then citation count
-2. arXiv MCP: search_papers(query, max_results=20), filter to last 3 years
-3. OpenAlex (supplement): https://api.openalex.org/works?search={q}&sort=cited_by_count:desc&per-page=10&select=title,authorships,publication_year,doi,open_access,cited_by_count,abstract_inverted_index
-4. Brave Search MCP (if available): GitHub repos, official docs, Stack Overflow, benchmark leaderboards, dataset pages
+Search sources (use what's effective, order is a suggestion not a requirement):
+- Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query={q}&fields=title,abstract,year,citationCount,url,venue,externalIds&limit=20`
+- arXiv MCP: `search_papers(query, max_results=20)`
+- OpenAlex: `https://api.openalex.org/works?search={q}&sort=cited_by_count:desc&per-page=10&select=title,authorships,publication_year,doi,open_access,cited_by_count,abstract_inverted_index`
+- Brave Search MCP (if available): GitHub repos, benchmark leaderboards, dataset pages
 
 Reading paper content:
-- Abstract and metadata: available directly from the search APIs above
-- Full text (HTML): fetch https://ar5iv.labs.arxiv.org/html/{arxiv_id}
-- Figures, tables, result plots (requires PDF):
-    1. Run: python scripts/fetch_paper.py {arxiv_id}
-    2. docs/papers/{id}.txt — extracted text via PyMuPDF (read this first)
-    3. docs/papers/{id}.pdf — raw PDF, use Read tool when figures/diagrams are needed
+- Abstract and metadata: from search APIs
+- Full text (HTML): fetch `https://ar5iv.labs.arxiv.org/html/{arxiv_id}`
+- PDF: `python scripts/fetch_paper.py {arxiv_id}` → `docs/papers/{id}.txt`
 
-#### Step-by-step for Mode B
+#### Steps for Mode B
 
-**Step 1: Find candidate papers** (as before)
+**Step 1: Find candidate papers**
 
-**Step 2: Per-paper limitation analysis**
-For each promising paper, explicitly identify:
+**Step 2: Per-paper analysis**
+For each promising paper:
 - What problem does it solve well?
-- What does it NOT solve or explicitly leave as future work?
-- What assumptions does it make that may not hold in our setting?
-- What are the reported failure cases (check experiments/ablation sections)?
+- What does it NOT solve or leave as future work?
+- What assumptions does it make?
+- Reported failure cases?
+- **논문에서 사용/참조한 다른 기법 중 우리 프로젝트에 유용한 것이 있는가?** → 있으면 추가 탐색
 
 **Step 3: Cross-paper synthesis**
-After reading 5+ papers, look for complementary pairs/triples:
-- Paper A is strong at X but weak at Y; Paper B is strong at Y — can they be combined?
-- Paper A proposes a technique that was never applied to our specific failure mode — would it transfer?
-- Two papers solve the same problem differently — is there a hybrid that gets the best of both?
-
-For each synthesis hypothesis, estimate:
-- Which of our current failure modes it addresses
-- Expected gain on primary metric (cite evidence from papers)
-- Implementation effort: low / medium / high
-- Risk: low (well-tested components) / medium / high (requires novel training)
+Look for complementary combinations. Only propose when there is a clear mechanistic reason.
 
 **Step 4: Rank proposals**
-Produce a ranked list of proposals (1 = highest priority):
-1. Direct paper implementations (low risk, known gain)
-2. Extensions of a single paper (medium risk, potentially higher gain)
-3. Multi-paper hybrids (higher risk, highest potential gain)
-
-Only propose hybrids if there is a clear mechanistic reason they should work together — not just "both are good papers".
+Ranking criteria: 근거 강도, 구현 난이도, 예상 효과.
 
 Output format for docs/baselines.md:
 ```
@@ -138,22 +108,19 @@ Output format for docs/baselines.md:
 - idea: {1-2 sentences}
 - limitations: {what this paper does NOT solve}
 - relevance: {connection to current failure mode}
-- expected gain: {based on primary metric in eval_policy.md, with evidence}
+- expected gain: {with evidence}
 - implementation effort: low / medium / high
-- compute cost: within budget / over budget
 ```
 
 Output format for docs/synthesis_proposals.md:
 ```
 ## Proposal {N}: {descriptive name}
-type: extension / hybrid / novel-application
 papers: [{paper A}, {paper B}, ...]
 hypothesis: {why combining these should work — mechanistic reasoning}
 addresses failure mode: {from error_analysis.md}
-expected gain: {estimate with evidence}
+expected gain: {with evidence}
 effort: low / medium / high
 risk: low / medium / high
-novel contribution: {what is genuinely new vs. what is taken directly from papers}
 ```
 
 Rules:
@@ -161,8 +128,7 @@ Rules:
 - do not re-review methods already in baselines.md
 - mark uncertain claims as "hypothesis"
 - propose evaluation policy changes in proposed_policy_changes.md, do not edit directly
-- a synthesis proposal must cite mechanistic evidence — "both methods are good" is not sufficient
-- the synthesis_proposals.md file is the primary input for method-reviser
+- synthesis proposal must cite mechanistic evidence
 
 ## Handoff output
 After completing either mode, write `docs/handoff_researcher.md`:
@@ -172,17 +138,8 @@ date: {date}
 mode: A / B
 
 ## What was done
-- {summary}
-
 ## Key decisions
-- {metric chosen and why} / {methods selected and why}
-
 ## Files written
-- {list}
-
 ## Open questions
-- {unresolved items for next agent}
-
 ## Next agent's first step
-{exact instruction for engineer or method-reviser}
 ```

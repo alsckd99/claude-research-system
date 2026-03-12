@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def load_registry() -> list:
-    registry_path = Path("experiments/registry.json")
+    registry_path = Path("results/registry.json")
     if not registry_path.exists():
         return []
     with open(registry_path) as f:
@@ -29,9 +29,13 @@ def detect_trend(runs: list) -> str:
     last = values[-1]
     prev_avg = sum(values[:-1]) / len(values[:-1])
 
-    if last > prev_avg * 1.01:
+    if prev_avg == 0:
+        return "insufficient_data"
+
+    ratio = last / prev_avg
+    if ratio > 1.01:
         return "improving"
-    elif last < prev_avg * 0.99:
+    elif ratio < 0.99:
         return "degrading"
     else:
         return "plateau"
@@ -52,49 +56,39 @@ def generate_next_actions(runs: list, trend: str, failures: int) -> str:
 
     if not runs:
         actions = [
-            "1. **[즉시]** baseline 코드 구현 완료 확인 (`src/` 디렉토리)",
+            "1. **[즉시]** baseline 코드 구현 완료 확인",
             "2. **[즉시]** smoke test 실행: `pytest -q tests/`",
-            "3. **[즉시]** 첫 baseline 실험 실행: `python scripts/run_experiment.py --config configs/base.yaml --output experiments/runs/$(date +%Y%m%d_%H%M%S)`",
+            "3. **[즉시]** 첫 baseline 실험 실행",
         ]
     elif failures >= 3:
         actions = [
-            f"1. **[긴급]** 연속 {failures}회 실패 — `stdout.log` 에러 원인 분석",
-            "2. **[긴급]** `experiments/reports/error_analysis.md` 확인",
+            f"1. **[긴급]** 연속 {failures}회 실패 — stdout.log 에러 원인 분석",
+            "2. **[긴급]** error_analysis.md 확인",
             "3. **[권장]** result-analyzer skill 실행하여 실패 분류",
-            "4. **[권장]** 작은 단위 테스트로 코드 디버깅",
         ]
     elif trend == "plateau":
         actions = [
             "1. **[분석]** result-analyzer skill 실행 — 성능 정체 원인 파악",
             "2. **[탐색]** literature-scout skill 실행 — 새 방법 탐색",
-            "3. **[검토]** `docs/baselines.md` — 아직 시도 안 한 방법 확인",
-            "4. **[제안]** `experiments/reports/proposed_policy_changes.md` 확인",
+            "3. **[검토]** docs/baselines.md — 아직 시도 안 한 방법 확인",
         ]
     elif trend == "degrading":
         actions = [
             "1. **[긴급]** 최근 변경 사항 확인 (`git log --oneline -5`)",
             "2. **[긴급]** result-analyzer skill 실행 — 성능 하락 원인 파악",
-            "3. **[검토]** rollback 여부 검토 (`git diff` 확인)",
+            "3. **[검토]** rollback 여부 검토",
         ]
     elif trend == "improving":
         actions = [
             "1. **[계속]** 현재 방향 유지 — 다음 실험 실행",
             "2. **[선택]** ablation 실험으로 어떤 변경이 효과 있는지 확인",
-            "3. **[선택]** secondary metric도 함께 확인 (지연시간, GPU 메모리)",
+            "3. **[선택]** secondary metric도 함께 확인",
         ]
     else:
         actions = [
             "1. **[확인]** 첫 실험 결과 분석",
             "2. **[다음]** result-analyzer skill 실행",
         ]
-
-    # 공통 추가 액션
-    if runs and trend != "insufficient_data":
-        actions.append("---")
-        actions.append("**항상 확인:**")
-        actions.append("- `experiments/reports/latest.md` — 현재 성능 요약")
-        actions.append("- `experiments/reports/error_analysis.md` — 최근 실패 분석")
-        actions.append("- `docs/baselines.md` — 비교 기준")
 
     return "\n".join(actions)
 
@@ -121,7 +115,7 @@ _Updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_
 {generate_next_actions(runs, trend, failures)}
 """
 
-    output_path = Path("experiments/reports/next_actions.md")
+    output_path = Path("results/reports/next_actions.md")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content)
 

@@ -8,17 +8,19 @@ model: claude-opus-4-6
 Code implementation, refactoring, and test writing.
 
 ## Coding rules
-- Python 3.11+
+- Python 3.10+
 - all config values come from configs/*.yaml — no hardcoding
-- Ruff + Black style
 - new functionality requires tests
 - keep old methods behind a config flag rather than deleting them
 - new dependency: update requirements.txt and environment.yml together
 
-## Done criteria (all must pass)
+## Done criteria
+All tests must pass before handoff:
 ```bash
-ruff check src/ && black --check src/ && pytest -q tests/
+pytest -q tests/
 ```
+Linter/formatter는 프로젝트에 설정되어 있으면 따른다 (ruff, black, flake8 등).
+설정이 없으면 기본적인 코드 품질만 확인.
 
 ## Out of scope
 - editing CLAUDE.md Immutable Core
@@ -33,20 +35,10 @@ After done criteria pass, write `docs/handoff_engineer.md`:
 date: {date}
 
 ## What was implemented
-- {summary}
-
 ## Key decisions
-- {architectural choices, trade-offs}
-
 ## Files modified
-- {list with brief description of each}
-
 ## Test status
-- pytest: pass / fail — {N passed, N failed}
-
 ## Open questions
-- {anything runner or next engineer should know}
-
-## Next agent's first step
-Run: make experiment
+## Next step
+{프로젝트의 실행 방법에 맞게 기술}
 ```

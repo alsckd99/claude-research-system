@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def load_recent_runs(n: int = 10) -> list:
-    registry_path = Path("experiments/registry.json")
+    registry_path = Path("results/registry.json")
     if not registry_path.exists():
         return []
     with open(registry_path) as f:
@@ -30,32 +30,43 @@ def load_metrics_for_runs(runs: list) -> list:
     return results
 
 
-def classify_failures(runs_with_metrics: list) -> dict:
-    classifications = {
+def analyze_runs(runs_with_metrics: list) -> dict:
+    """실험 결과를 분석한다. 고정된 분류가 아니라 데이터에서 패턴을 찾는다."""
+    analysis = {
         "failed_runs": [],
-        "plateau": False,
-        "potential_overfitting": False,
-        "instability": False,
-        "data_issues": False,
+        "patterns": [],
     }
 
     failed = [r for r in runs_with_metrics if r.get("status") == "failed"]
-    classifications["failed_runs"] = [r.get("run_id", "") for r in failed]
+    analysis["failed_runs"] = [r.get("run_id", "") for r in failed]
 
     completed = [r for r in runs_with_metrics if r.get("status") == "completed"]
     if len(completed) >= 3:
         values = [r.get("primary_metric_value", 0.0) for r in completed[-5:]]
         if len(values) >= 3:
-            variance = max(values) - min(values)
-            if variance < 0.005:
-                classifications["plateau"] = True
-            if variance > 0.05:
-                classifications["instability"] = True
+            value_range = max(values) - min(values)
+            mean_val = sum(values) / len(values)
 
-    return classifications
+            # 변화가 거의 없으면 plateau 가능성 (threshold는 metric 범위에 비례)
+            if mean_val != 0 and value_range / abs(mean_val) < 0.01:
+                analysis["patterns"].append({
+                    "type": "plateau",
+                    "confidence": "likely",
+                    "detail": f"최근 {len(values)}회 실험에서 변화폭 {value_range:.4f}",
+                })
+
+            # 변화가 크면 instability 가능성
+            if mean_val != 0 and value_range / abs(mean_val) > 0.1:
+                analysis["patterns"].append({
+                    "type": "instability",
+                    "confidence": "hypothesis",
+                    "detail": f"실험 간 변화폭 {value_range:.4f}",
+                })
+
+    return analysis
 
 
-def generate_error_analysis(runs_with_metrics: list, classifications: dict) -> str:
+def generate_error_analysis(runs_with_metrics: list, analysis: dict) -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     completed = [r for r in runs_with_metrics if r.get("status") == "completed"]
     failed = [r for r in runs_with_metrics if r.get("status") == "failed"]
@@ -81,32 +92,19 @@ _Updated: {now}_
     else:
         report += "_완료된 실험 없음_\n"
 
-    report += "\n## Failure Classification\n"
+    report += "\n## Detected Patterns\n"
 
-    if classifications["failed_runs"]:
+    if analysis["failed_runs"]:
         report += f"\n### Failed Runs\n"
-        for run_id in classifications["failed_runs"]:
+        for run_id in analysis["failed_runs"]:
             report += f"- `{run_id}`: stdout.log 확인 필요\n"
 
-    if classifications["plateau"]:
-        report += "\n### Performance Plateau (가능성 높음)\n"
-        report += "- 최근 실험에서 성능 변화가 거의 없음\n"
-        report += "- **권장**: literature-scout skill 실행으로 새 방법 탐색\n"
+    for pattern in analysis["patterns"]:
+        report += f"\n### {pattern['type'].title()} ({pattern['confidence']})\n"
+        report += f"- {pattern['detail']}\n"
 
-    if classifications["instability"]:
-        report += "\n### Training Instability (가설)\n"
-        report += "- 실험 간 성능 분산이 큼\n"
-        report += "- **권장**: seed 고정 확인, learning rate 조정 검토\n"
-
-    if not any([classifications["failed_runs"], classifications["plateau"], classifications["instability"]]):
+    if not analysis["failed_runs"] and not analysis["patterns"]:
         report += "\n_특이 패턴 없음 — 실험 계속 진행 권장_\n"
-
-    report += "\n## Recommended Next Actions\n"
-    if classifications["failed_runs"]:
-        report += "1. **[긴급]** failed run의 stdout.log 확인\n"
-    if classifications["plateau"]:
-        report += "1. **[권장]** literature-scout skill 실행\n"
-        report += "2. **[권장]** result-analyzer skill 실행으로 정체 원인 심층 분석\n"
 
     report += "\n---\n_이 파일은 자동 생성됩니다. 수동 보완은 아래에 추가하세요._\n\n"
     report += "## Manual Notes\n_여기에 수동으로 관찰 사항을 기록하세요._\n"
@@ -121,18 +119,16 @@ def main():
         return
 
     runs_with_metrics = load_metrics_for_runs(runs)
-    classifications = classify_failures(runs_with_metrics)
-    report = generate_error_analysis(runs_with_metrics, classifications)
+    analysis = analyze_runs(runs_with_metrics)
+    report = generate_error_analysis(runs_with_metrics, analysis)
 
-    output_path = Path("experiments/reports/error_analysis.md")
+    output_path = Path("results/reports/error_analysis.md")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report)
 
-    print(f"[analyze] error_analysis.md 갱신 완료")
-    if classifications["plateau"]:
-        print("[analyze] 경고: 성능 정체 감지 — literature-scout 실행 권장")
-    if classifications["instability"]:
-        print("[analyze] 경고: 학습 불안정 의심")
+    print("[analyze] error_analysis.md 갱신 완료")
+    for pattern in analysis["patterns"]:
+        print(f"[analyze] 감지: {pattern['type']} ({pattern['confidence']})")
 
 
 if __name__ == "__main__":
