@@ -51,19 +51,29 @@ the standard evaluation metrics for your task domain.
 ## Run the autonomous loop
 
 ```bash
+# continuous mode — runs forever in background (survives terminal close)
+python orchestrator/scheduler.py --project ~/projects/my-project --mode continuous
+
+# check status / stop
+python orchestrator/scheduler.py --project ~/projects/my-project --status
+python orchestrator/scheduler.py --project ~/projects/my-project --stop
+
+# foreground (see output directly)
+python orchestrator/scheduler.py --project ~/projects/my-project --mode continuous --foreground
+
 # one-shot analysis
 python orchestrator/main.py --project ~/projects/my-project --mode analyze-only
 
-# nightly loop (analyze → experiment → literature → policy)
+# nightly loop
 python orchestrator/main.py --project ~/projects/my-project --mode nightly
-
-# background scheduler
-nohup python orchestrator/scheduler.py \
-    --project ~/projects/my-project \
-    --interval 24h --mode full-loop &
 ```
 
-Stop condition: `--no-improve-k 3` halts the loop if no metric improvement over the last 3 runs.
+Key behaviors:
+- **Background daemon**: terminal을 꺼도 계속 실행됨
+- **Skip completed**: 이미 완료된 method는 자동 스킵 (`--no-skip-completed`로 비활성화)
+- **No prompts**: 중간에 질문하지 않고 자동 진행
+- **Top N visualization**: 시각화에서 상위 N개만 표시 (기본 10)
+- **Auto-escalation**: 개선 없으면 자동으로 literature search 트리거
 
 ---
 

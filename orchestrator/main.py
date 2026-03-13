@@ -5,11 +5,13 @@ Usage:
     python orchestrator/main.py --project /path/to/project --mode nightly
     python orchestrator/main.py --project /path/to/project --mode full-loop
     python orchestrator/main.py --project /path/to/project --mode analyze-only
+    python orchestrator/main.py --project /path/to/project --mode continuous
 
 Modes:
     analyze-only  : analyze + update reports only (no experiments)
     nightly       : analyze -> 1 experiment -> re-analyze
     full-loop     : analyze -> N experiments -> literature -> policy -> agent analysis
+    continuous    : non-stop loop — analyze -> experiment -> improve -> repeat
 
 Requirements:
     pip install anthropic pyyaml requests
@@ -53,6 +55,36 @@ def load_registry(project: Path) -> list:
     if not reg.exists():
         return []
     return json.loads(reg.read_text()).get("runs", [])
+
+
+def get_completed_methods(project: Path) -> set[str]:
+    """Return set of method names that already have completed runs."""
+    methods = set()
+    runs_dir = project / "results" / "runs"
+    if not runs_dir.exists():
+        return methods
+    for run_dir in sorted(runs_dir.iterdir()):
+        metrics_file = run_dir / "metrics.json"
+        config_file = run_dir / "config_snapshot.yaml"
+        if not metrics_file.exists():
+            continue
+        try:
+            metrics = json.loads(metrics_file.read_text())
+            if metrics.get("status") != "completed":
+                continue
+            # extract method name from config
+            if config_file.exists():
+                try:
+                    import yaml
+                    config = yaml.safe_load(config_file.read_text()) or {}
+                    method = config.get("method", config.get("model", ""))
+                    if method:
+                        methods.add(str(method))
+                except Exception:
+                    pass
+        except (json.JSONDecodeError, OSError):
+            continue
+    return methods
 
 
 # --- improvement-based stop condition (Reflexion p.7) ---
@@ -117,8 +149,23 @@ def phase_analyze(project: Path) -> dict:
     }
 
 
-def phase_experiment(project: Path) -> dict:
+def phase_experiment(project: Path, skip_methods: set[str] | None = None) -> dict:
+    """Run experiment. Skip methods already completed if skip_methods is provided."""
     print("\n[experiment] start")
+
+    # check if current config method was already run
+    if skip_methods:
+        try:
+            import yaml
+            config_path = project / "configs" / "base.yaml"
+            if config_path.exists():
+                config = yaml.safe_load(config_path.read_text()) or {}
+                method = config.get("method", config.get("model", ""))
+                if method and method in skip_methods:
+                    print(f"[experiment] method '{method}' already completed — skip")
+                    return {"status": "skipped", "reason": "already_completed", "method": method}
+        except Exception:
+            pass
 
     test_result = run([sys.executable, "-m", "pytest", "-q", "tests/"], cwd=project)
     if test_result.returncode != 0:
@@ -172,7 +219,8 @@ def phase_literature(project: Path, max_turns: int) -> None:
     prompt = (
         "Run the literature-scout skill. "
         f"Current failure analysis:\n{error_analysis[:500]}\n\n"
-        "Find 3+ relevant papers and update docs/baselines.md."
+        "Find 3+ relevant papers and update docs/baselines.md. "
+        "Do NOT ask for confirmation — proceed autonomously."
     )
     _run_claude(prompt, cwd=project, max_turns=max_turns)
 
@@ -191,7 +239,8 @@ def phase_policy(project: Path, max_turns: int) -> None:
     prompt = (
         "Run the policy-evolver skill. "
         "Review proposals in proposed_policy_changes.md with policy_guard "
-        "and apply only approved changes to docs/eval_policy.md."
+        "and apply only approved changes to docs/eval_policy.md. "
+        "Do NOT ask for confirmation — proceed autonomously."
     )
     _run_claude(prompt, cwd=project, max_turns=max_turns)
 
@@ -281,11 +330,36 @@ def _claude_available() -> bool:
 
 def _run_claude(prompt: str, cwd: Path, max_turns: int = 10) -> None:
     result = subprocess.run(
-        ["claude", "--print", f"--max-turns={max_turns}", prompt],
+        ["claude", "--print", f"--max-turns={max_turns}",
+         "--allowedTools", "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch,WebSearch,"
+         "mcp__arxiv__search_papers,mcp__arxiv__read_paper,mcp__arxiv__list_papers,"
+         "mcp__fetch__fetch_readable,mcp__fetch__fetch_json,"
+         "mcp__brave-search__brave_web_search",
+         "--yes",  # no interactive prompts
+         prompt],
         cwd=str(cwd), capture_output=False, text=True
     )
     if result.returncode != 0:
         print(f"[claude] failed (returncode={result.returncode})")
+
+
+def _save_loop_state(project: Path, iteration: int, action: str) -> None:
+    """Save loop state for session resume."""
+    reports_dir = project / "results" / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    state = {
+        "loop_iteration": iteration,
+        "last_action": action,
+        "saved_at": datetime.now().isoformat(),
+    }
+
+    registry = load_registry(project)
+    completed = [r for r in registry if r.get("status") == "completed"]
+    if completed:
+        best = max(completed, key=lambda r: r.get("primary_metric_value", 0.0))
+        state["best_metric"] = best.get("primary_metric_value", "unknown")
+
+    (reports_dir / ".session_state.json").write_text(json.dumps(state, indent=2))
 
 
 # --- main ---
@@ -295,17 +369,21 @@ def main():
     parser.add_argument("--project", default=".", help="project path")
     parser.add_argument(
         "--mode",
-        choices=["analyze-only", "nightly", "full-loop"],
+        choices=["analyze-only", "nightly", "full-loop", "continuous"],
         default="nightly"
     )
     parser.add_argument("--max-experiments", type=int, default=1,
-                        help="max experiment runs (cost control)")
+                        help="max experiment runs per iteration (cost control)")
     parser.add_argument("--max-turns", type=int, default=10,
                         help="max turns per Claude session (cost control)")
-    parser.add_argument("--timeout-minutes", type=int, default=90,
-                        help="total loop timeout in minutes")
+    parser.add_argument("--timeout-minutes", type=int, default=0,
+                        help="total loop timeout in minutes (0 = no timeout)")
     parser.add_argument("--no-improve-k", type=int, default=3,
                         help="stop if primary metric does not improve over last K runs (0 = disable)")
+    parser.add_argument("--skip-completed", action="store_true", default=True,
+                        help="skip methods that already have completed runs (default: True)")
+    parser.add_argument("--no-skip-completed", dest="skip_completed", action="store_false",
+                        help="re-run all methods even if already completed")
     args = parser.parse_args()
 
     project = Path(args.project).resolve()
@@ -313,20 +391,28 @@ def main():
         print(f"[error] {project}/CLAUDE.md not found — not a research-os project")
         sys.exit(1)
 
-    import signal
+    # timeout setup (0 = no timeout for continuous mode)
+    if args.timeout_minutes > 0:
+        import signal
 
-    def _timeout_handler(signum, frame):
-        print(f"\n[orchestrator] timeout ({args.timeout_minutes}m) — exit")
-        sys.exit(1)
+        def _timeout_handler(signum, frame):
+            print(f"\n[orchestrator] timeout ({args.timeout_minutes}m) — exit")
+            sys.exit(1)
 
-    signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(args.timeout_minutes * 60)
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(args.timeout_minutes * 60)
 
     print(f"[orchestrator] start  mode={args.mode}  project={project.name}")
     print(f"[orchestrator] time:  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"[orchestrator] limits: max_experiments={args.max_experiments}, "
           f"max_turns={args.max_turns}, timeout={args.timeout_minutes}m, "
-          f"no_improve_k={args.no_improve_k}")
+          f"no_improve_k={args.no_improve_k}, skip_completed={args.skip_completed}")
+
+    if args.mode == "continuous":
+        _run_continuous(project, args)
+        return
+
+    # --- single-pass modes ---
 
     # 1. analyze
     context = phase_analyze(project)
@@ -336,6 +422,8 @@ def main():
         return
 
     # 2. experiment loop
+    skip_methods = get_completed_methods(project) if args.skip_completed else None
+
     for i in range(args.max_experiments):
         print(f"\n[orchestrator] experiment {i+1}/{args.max_experiments}")
 
@@ -344,7 +432,7 @@ def main():
             print(f"[orchestrator] no improvement over last {args.no_improve_k} runs — stop")
             break
 
-        result = phase_experiment(project)
+        result = phase_experiment(project, skip_methods=skip_methods)
         if result.get("status") == "failed":
             print("[orchestrator] experiment failed — stop loop")
             break
@@ -364,6 +452,74 @@ def main():
         phase_claude_agent(project, context)
 
     print(f"\n[orchestrator] done: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+def _run_continuous(project: Path, args) -> None:
+    """Non-stop improvement loop: analyze → experiment → literature → improve → repeat."""
+    iteration = 0
+    consecutive_failures = 0
+    max_consecutive_failures = 5
+
+    while True:
+        iteration += 1
+        print(f"\n{'='*60}")
+        print(f"[orchestrator] === ITERATION {iteration} ===")
+        print(f"[orchestrator] time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"{'='*60}")
+
+        _save_loop_state(project, iteration, "starting")
+
+        # improvement-based stop
+        if args.no_improve_k > 0 and no_improvement(project, args.no_improve_k):
+            print(f"[orchestrator] no improvement over last {args.no_improve_k} runs")
+            print("[orchestrator] running literature search for new directions...")
+            phase_literature(project, max_turns=args.max_turns)
+            # reset after literature search — new methods may help
+            # but if still stuck after another K runs, the next check will fire again
+
+        # 1. analyze current state
+        context = phase_analyze(project)
+
+        # 2. run experiments (skip already-completed methods)
+        skip_methods = get_completed_methods(project) if args.skip_completed else None
+        exp_failed = False
+        for i in range(args.max_experiments):
+            result = phase_experiment(project, skip_methods=skip_methods)
+            if result.get("status") == "failed":
+                exp_failed = True
+                consecutive_failures += 1
+                print(f"[orchestrator] consecutive failures: {consecutive_failures}")
+                break
+            elif result.get("status") == "completed":
+                consecutive_failures = 0
+
+        if consecutive_failures >= max_consecutive_failures:
+            print(f"[orchestrator] {max_consecutive_failures} consecutive failures — "
+                  "searching literature for alternative approaches")
+            phase_literature(project, max_turns=args.max_turns)
+            consecutive_failures = 0
+
+        # 3. re-analyze
+        context = phase_analyze(project)
+
+        # 4. visualize
+        phase_visualize(project)
+
+        # 5. decision report
+        phase_decision_report(project)
+
+        # 6. literature + policy (every 3rd iteration or when needed)
+        if iteration % 3 == 0 or exp_failed:
+            phase_literature(project, max_turns=args.max_turns)
+            phase_policy(project, max_turns=args.max_turns)
+
+        # 7. agent analysis (every 5th iteration)
+        if iteration % 5 == 0:
+            phase_claude_agent(project, context)
+
+        _save_loop_state(project, iteration, "completed")
+        print(f"\n[orchestrator] iteration {iteration} done: "
+              f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
 if __name__ == "__main__":

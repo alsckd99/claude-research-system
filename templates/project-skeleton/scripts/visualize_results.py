@@ -1,10 +1,11 @@
 """
 Cross-run visualization generator.
 Generates comparison graphs across all experiment runs.
+Only shows top N runs by default to avoid clutter.
 
 Usage:
     python scripts/visualize_results.py --auto
-    python scripts/visualize_results.py --output results/reports/plots
+    python scripts/visualize_results.py --output results/reports/plots --top 10
 """
 import argparse
 import json
@@ -12,6 +13,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+# max runs to show in detailed charts (trend shows all, others are capped)
+DEFAULT_TOP_N = 10
 
 
 def load_all_runs(results_dir: Path) -> list[dict[str, Any]]:
@@ -95,12 +99,34 @@ def plot_metric_trend(runs: list[dict], output_dir: Path, plt) -> None:
     print(f"[viz] saved: metric_trend.png ({len(values)} runs)")
 
 
-def plot_secondary_comparison(runs: list[dict], output_dir: Path, plt) -> None:
-    """Bar chart comparing secondary metrics across recent runs."""
+def filter_top_runs(runs: list[dict], top_n: int) -> list[dict]:
+    """Keep only top N runs by primary metric + the latest run. Avoids clutter."""
+    if len(runs) <= top_n:
+        return runs
+
+    scored = []
+    for r in runs:
+        val = r.get("primary_metric", {}).get("value")
+        scored.append((float(val) if val is not None else float("-inf"), r))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top = [r for _, r in scored[:top_n]]
+
+    # always include the latest run
+    latest = runs[-1]
+    if latest not in top:
+        top.append(latest)
+
+    return top
+
+
+def plot_secondary_comparison(runs: list[dict], output_dir: Path, plt, top_n: int = 5) -> None:
+    """Bar chart comparing secondary metrics across top runs only."""
     import numpy as np
 
-    # take last 5 runs with secondary metrics
-    recent = [r for r in runs if r.get("secondary_metrics")][-5:]
+    # take top runs by primary metric, not just latest
+    with_secondary = [r for r in runs if r.get("secondary_metrics")]
+    recent = filter_top_runs(with_secondary, top_n)[-top_n:]
     if len(recent) < 2:
         print("[viz] not enough runs for secondary comparison — skip")
         return
@@ -169,11 +195,11 @@ def plot_run_status_summary(runs: list[dict], output_dir: Path, plt) -> None:
     print(f"[viz] saved: run_status_summary.png")
 
 
-def plot_improvement_waterfall(runs: list[dict], output_dir: Path, plt) -> None:
-    """Waterfall chart showing per-run improvement delta."""
+def plot_improvement_waterfall(runs: list[dict], output_dir: Path, plt, top_n: int = DEFAULT_TOP_N) -> None:
+    """Waterfall chart showing per-run improvement delta. Last N runs only."""
     values = []
     labels = []
-    for r in runs:
+    for r in runs[-top_n:]:  # only recent runs
         pm = r.get("primary_metric", {})
         val = pm.get("value")
         if val is not None:
@@ -251,6 +277,8 @@ def main():
     parser.add_argument("--auto", action="store_true", help="Auto mode (no prompts)")
     parser.add_argument("--output", default="results/reports/plots",
                         help="Output directory for plots")
+    parser.add_argument("--top", type=int, default=DEFAULT_TOP_N,
+                        help=f"Max runs to show in detailed charts (default: {DEFAULT_TOP_N})")
     args = parser.parse_args()
 
     results_dir = Path("results")
@@ -262,7 +290,7 @@ def main():
         print("[viz] no runs found — nothing to visualize")
         return
 
-    print(f"[viz] found {len(runs)} runs")
+    print(f"[viz] found {len(runs)} runs (showing top {args.top} in detail charts)")
 
     try:
         import matplotlib
@@ -273,10 +301,12 @@ def main():
         generate_summary_text(runs, output_dir)
         return
 
+    # trend plot shows ALL runs (overview)
     plot_metric_trend(runs, output_dir, plt)
-    plot_secondary_comparison(runs, output_dir, plt)
+    # detail charts show only top N to avoid clutter
+    plot_secondary_comparison(runs, output_dir, plt, top_n=args.top)
     plot_run_status_summary(runs, output_dir, plt)
-    plot_improvement_waterfall(runs, output_dir, plt)
+    plot_improvement_waterfall(runs, output_dir, plt, top_n=args.top)
     generate_summary_text(runs, output_dir)
 
     print(f"[viz] done: {output_dir}")
