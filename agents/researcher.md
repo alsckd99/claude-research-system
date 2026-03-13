@@ -151,7 +151,7 @@ Search sources (use what's effective, order is a suggestion not a requirement):
 Reading paper content:
 - Abstract and metadata: from search APIs
 - Full text (HTML): fetch `https://ar5iv.labs.arxiv.org/html/{arxiv_id}`
-- PDF: `python scripts/fetch_paper.py {arxiv_id}` then `docs/papers/{id}.txt`
+- Full text via MCP: `read_paper(arxiv_id)` — arXiv MCP가 캐시 및 파싱 자동 처리
 
 #### Steps for Mode B
 

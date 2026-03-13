@@ -106,7 +106,7 @@ Output: `docs/eval_policy.md`
 
 Engineer agent:
 - Objective, 모델, baseline approach, eval_policy에 맞게 pipeline 구현
-- `scripts/run_all.sh`, `scripts/improve_loop.py` 포함
+- `src/train.py`, `src/evaluate.py` 구현 (run_experiment.py가 호출하는 진입점)
 - Tests must pass
 
 Runner agent:

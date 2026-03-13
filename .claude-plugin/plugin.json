@@ -15,6 +15,7 @@
       "Bash(uv*)",
       "Bash(git add*)",
       "Bash(git commit*)",
+      "Bash(git checkout*)",
       "Bash(git status)",
       "Bash(git diff*)",
       "Bash(git log*)",

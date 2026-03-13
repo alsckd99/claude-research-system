@@ -13,11 +13,9 @@ Usage:
     logger.finalize()
 """
 import json
-import sys
 import time
 import traceback
 from datetime import datetime
-from io import StringIO
 from pathlib import Path
 from typing import Any
 
@@ -36,10 +34,6 @@ class DebugLogger:
         self.value_checks: list[dict[str, Any]] = []
         self._start_time = time.time()
         self._step_timers: dict[str, float] = {}
-
-        # redirect stdout/stderr capture
-        self._stdout_capture = StringIO()
-        self._stderr_capture = StringIO()
 
         print(f"[debug] logger initialized: {self.debug_dir}")
 

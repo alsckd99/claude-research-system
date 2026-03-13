@@ -19,6 +19,11 @@ results/runs/{YYYYMMDD_HHMMSS}/
 ├── git_commit.txt
 ├── stdout.log
 ├── plots/                    # 시각화 (experiment-runner가 생성)
+├── debug/                    # 디버그 로그 (debug_logger가 자동 생성)
+│   ├── debug_summary.json
+│   ├── debug_steps.json
+│   ├── value_checks.json
+│   └── debug_report.md
 └── analysis/                 # 분석 기록 (result-analyzer가 생성)
     ├── sanity_checks.json
     ├── deep_analysis.md

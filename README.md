@@ -81,7 +81,8 @@ Key behaviors:
 
 ```
 claude-research-system/
-├── plugin.json                  ← Claude Code plugin manifest
+├── .claude-plugin/
+│   └── plugin.json              ← Claude Code plugin manifest
 ├── install.sh                   ← API key setup + pip install
 ├── agents/
 │   ├── researcher.md            ← paper search, eval framework design
@@ -111,9 +112,14 @@ claude-research-system/
     └── project-skeleton/        ← minimal project structure
         └── scripts/
             ├── run_experiment.py       ← experiment execution + debug logging
-            ├── visualize_results.py    ← cross-run visualization (NEW)
-            ├── debug_logger.py         ← structured debug logging (NEW)
-            └── generate_decision_report.py  ← decision documentation (NEW)
+            ├── analyze_failures.py    ← failure pattern detection
+            ├── summarize_results.py   ← results summary report
+            ├── propose_next_steps.py  ← next action proposals
+            ├── validate_config.py     ← config validation
+            ├── save_session_state.py  ← session state persistence (hooks)
+            ├── visualize_results.py   ← cross-run visualization
+            ├── debug_logger.py        ← structured debug logging
+            └── generate_decision_report.py ← decision documentation
 ```
 
 ---

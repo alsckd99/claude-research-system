@@ -148,7 +148,7 @@ cat > "${CLAUDE_DIR}/settings.json" << 'SETTINGS_EOF'
     "allow": [
       "Bash(python*)", "Bash(pytest*)", "Bash(ruff*)", "Bash(black*)",
       "Bash(conda*)", "Bash(uv*)",
-      "Bash(git add*)", "Bash(git commit*)", "Bash(git status)",
+      "Bash(git add*)", "Bash(git commit*)", "Bash(git checkout*)", "Bash(git status)",
       "Bash(git diff*)", "Bash(git log*)", "Bash(git branch*)", "Bash(git pull)",
       "Bash(make*)", "Bash(mkdir*)", "Bash(cp*)", "Bash(mv*)", "Bash(jq*)"
     ],

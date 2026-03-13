@@ -25,18 +25,6 @@ def load_metrics(run_dir: str) -> dict:
         return json.load(f)
 
 
-def load_config_snapshot(run_dir: str) -> dict:
-    config_path = Path(run_dir) / "config_snapshot.yaml"
-    if not config_path.exists():
-        return {}
-    try:
-        import yaml
-        with open(config_path) as f:
-            return yaml.safe_load(f) or {}
-    except Exception:
-        return {}
-
-
 def format_table(runs: list) -> str:
     if not runs:
         return "_실험 결과 없음_"

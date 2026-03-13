@@ -113,9 +113,15 @@ _Updated: {now}_
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--auto", action="store_true")
+    args = parser.parse_args()
+
     runs = load_recent_runs(n=10)
     if not runs:
-        print("[analyze] 실험 결과 없음.")
+        if not args.auto:
+            print("[analyze] 실험 결과 없음.")
         return
 
     runs_with_metrics = load_metrics_for_runs(runs)

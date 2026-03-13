@@ -96,7 +96,7 @@ def no_improvement(project: Path, k: int) -> bool:
         return False
     recent = runs[-k:]
     values = [
-        r.get("metrics", {}).get("primary_metric", {}).get("value")
+        r.get("primary_metric_value")
         for r in recent
     ]
     values = [v for v in values if v is not None]

@@ -33,26 +33,21 @@ jobs:
           python scripts/validate_config.py
           pytest -q tests/
 
-      - name: Run orchestrator
+      - name: Run experiment
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          RESEARCH_OS_ROOT="${{ github.workspace }}" \
-          python -c "
-          import subprocess, sys
-          subprocess.run([sys.executable, '-m', 'scripts.run_experiment',
-            '--config', 'configs/base.yaml',
-            '--output', 'results/runs/ci_$(date +%Y%m%d_%H%M%S)'])
-          " 2>/dev/null || \
           python scripts/run_experiment.py \
             --config configs/base.yaml \
             --output results/runs/ci_$(date +%Y%m%d_%H%M%S)
 
       - name: Analyze & Report
         run: |
-          python scripts/analyze_failures.py
-          python scripts/summarize_results.py
-          python scripts/propose_next_steps.py
+          python scripts/analyze_failures.py --auto
+          python scripts/summarize_results.py --auto
+          python scripts/propose_next_steps.py --auto
+          python scripts/visualize_results.py --auto
+          python scripts/generate_decision_report.py --auto
 
       - name: Commit reports
         run: |
