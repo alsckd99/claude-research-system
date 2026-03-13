@@ -118,6 +118,7 @@ mkdir -p "${CLAUDE_DIR}/skills/data-auditor"
 mkdir -p "${CLAUDE_DIR}/skills/ablation-planner"
 mkdir -p "${CLAUDE_DIR}/skills/report-writer"
 mkdir -p "${CLAUDE_DIR}/hooks"
+mkdir -p "${CLAUDE_DIR}/rules"
 
 cp "${SCRIPT_DIR}/agents/researcher.md"     "${CLAUDE_DIR}/agents/"
 cp "${SCRIPT_DIR}/agents/engineer.md"       "${CLAUDE_DIR}/agents/"
@@ -135,6 +136,10 @@ cp "${SCRIPT_DIR}/skills/ablation-planner/SKILL.md"  "${CLAUDE_DIR}/skills/ablat
 cp "${SCRIPT_DIR}/skills/report-writer/SKILL.md"     "${CLAUDE_DIR}/skills/report-writer/"
 
 cp "${SCRIPT_DIR}/hooks/hooks.json" "${CLAUDE_DIR}/hooks/"
+
+cp "${SCRIPT_DIR}/.claude/rules/research.md"    "${CLAUDE_DIR}/rules/"
+cp "${SCRIPT_DIR}/.claude/rules/experiment.md"   "${CLAUDE_DIR}/rules/"
+cp "${SCRIPT_DIR}/.claude/rules/safety.md"       "${CLAUDE_DIR}/rules/"
 
 # settings.json (permissions)
 cat > "${CLAUDE_DIR}/settings.json" << 'SETTINGS_EOF'

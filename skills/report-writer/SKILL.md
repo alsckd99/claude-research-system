@@ -1,4 +1,15 @@
+---
+name: report-writer
+description: Generate experiment report with visualizations and decision rationale
+disable-model-invocation: true
+allowed-tools: Bash(python*), Read, Grep, Glob, Edit, Write
+---
+
 # Skill: report-writer
+
+## Contract
+- 리포트의 모든 수치는 results/registry.json과 metrics.json에서 가져온다 — 임의 생성 금지.
+- 시각화 스크립트 실행 결과를 출력에 포함한다.
 
 ## Trigger
 - "결과 정리해줘", "리포트 써줘"
@@ -18,11 +29,9 @@
 
 ### Step 4: 시각화 종합
 `python scripts/visualize_results.py --auto` 실행 → cross-run 시각화 자동 생성.
-각 run의 plots/에서 핵심 시각화 모아서 before/after 비교.
 
 ### Step 5: Decision Report 통합
 `python scripts/generate_decision_report.py --auto` 실행.
-모델 선택 이유, 개선 방식 이유, 디버깅 요약을 Approach 섹션에 통합.
 
 ### Step 6: 리포트 작성
 `results/report.md` — Objective, Approach, Results, Key Findings, What Worked/Didn't, Visualizations, Remaining Issues, References

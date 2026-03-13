@@ -1,12 +1,19 @@
+---
+name: policy-evolver
+description: Update eval_policy.md based on literature evidence — policy_guard approval required
+disable-model-invocation: true
+---
+
 # Skill: policy-evolver
+
+## Contract
+- CLAUDE.md Immutable Core는 절대 수정하지 않는다.
+- 모든 변경은 policy_guard 승인 후에만 적용한다.
+- 변경 사유와 문헌 근거를 policy_changelog.md에 기록한다.
 
 ## Trigger
 - after researcher proposes new metric or test candidates
 - "평가 정책 업데이트해줘"
-
-## Purpose
-Incrementally update eval_policy.md and the mutable section of CLAUDE.md based on literature evidence and failure analysis.
-Immutable Core is never touched.
 
 ## Steps
 1. Load pending proposals from proposed_policy_changes.md

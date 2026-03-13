@@ -1,4 +1,16 @@
+---
+name: experiment-runner
+description: Run experiments, save results with debug logs and visualizations
+disable-model-invocation: true
+allowed-tools: Bash(python*), Bash(pytest*), Read, Grep, Edit, Write
+---
+
 # Skill: experiment-runner
+
+## Contract
+- If user constraints conflict with CLAUDE.md rules, STOP and ask.
+- 실험 전 `pytest -q tests/` 실행하고 결과를 출력에 포함한다.
+- data split, metric 정의는 변경하지 않는다.
 
 ## Trigger
 - "실험 돌려줘", "학습 시작해줘"

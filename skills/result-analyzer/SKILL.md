@@ -1,4 +1,15 @@
+---
+name: result-analyzer
+description: Failure classification, code-level deep analysis, and review validation
+disable-model-invocation: false
+---
+
 # Skill: result-analyzer
+
+## Contract
+- Sanity checks를 반드시 Step 0에서 먼저 실행한다 — 건너뛰지 않는다.
+- overall metric만으로 "best method" 판단하지 않는다 — subgroup/per-class 분석 필수.
+- minimum 3 runs for conclusions. 단일 run 결과로 결론 내리지 않는다.
 
 ## Trigger
 - "결과 분석해줘", "왜 성능이 안 올랐지?"
@@ -7,7 +18,7 @@
 ## Steps
 
 ### Step 0: Sanity Checks (ALWAYS run first)
-Run checks from `sanity_checks.md`. Thresholds are defaults — eval_policy.md 기준이 있으면 그걸 따른다.
+Run checks from `sanity_checks.md`. eval_policy.md 기준이 있으면 그걸 따른다.
 
 Checks: class imbalance exploitation, threshold sensitivity, train-test divergence, near-random subgroup, metric disagreement, degenerate predictions, suspiciously perfect metrics, score distribution anomaly.
 
@@ -15,7 +26,7 @@ If ANY flag fires: report prominently, do NOT select as "best", recommend correc
 Same flag 3+ consecutive times → promote to hard constraint in eval_policy.md.
 
 ### Step 1: Load and summarize runs
-Last 5-10 runs. Per-category/subgroup breakdown 필수 — overall metric만 보지 않는다.
+Last 5-10 runs. Per-category/subgroup breakdown 필수.
 
 ### Step 2: Determine run phase
 - Phase A: faithful paper reproduction (first time)
@@ -48,13 +59,6 @@ Phase B: Phase A 대비 개선 여부, 어떤 부분이 gain을 drove했는지
 
 ### Step 8: Reflexion
 Same failure pattern 3+ consecutive runs → promote to learned rule in CLAUDE.md
-
-## Rules
-- minimum 3 runs for conclusions
-- mark uncertain claims as "hypothesis"
-- subgroup/per-class 분석 필수
-- metric이 이상하면 method보다 metric부터 의심
-- 결과가 이상하면 코드를 읽어서 원인 추적
 
 ## Review checklist (fairness & validity)
 - same data split / same seed / same preprocessing across compared runs

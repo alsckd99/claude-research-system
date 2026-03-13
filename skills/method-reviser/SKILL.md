@@ -1,4 +1,17 @@
+---
+name: method-reviser
+description: Evidence-based code changes — one proposal at a time
+disable-model-invocation: true
+allowed-tools: Bash(python*), Bash(pytest*), Read, Grep, Edit, Write
+---
+
 # Skill: method-reviser
+
+## Contract
+- If user constraints conflict with CLAUDE.md rules, STOP and ask.
+- 코드 변경 전 change plan을 먼저 작성한다.
+- 변경 후 `pytest -q tests/` 통과를 출력에 포함한다.
+- data split 변경 금지. metric 변경은 literature evidence 필수.
 
 ## Trigger
 - "코드 수정해줘", "방법 바꿔봐"
@@ -40,8 +53,3 @@ pytest -q tests/
 - 선택 근거, 기대 효과, 대안
 - 구현 방식 선택 이유, 논문과 다른 점
 - 예상 primary metric 변화, 리스크
-
-## Not allowed
-- changing data split
-- multiple simultaneous proposals
-- changing metrics without literature evidence
