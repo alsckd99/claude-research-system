@@ -50,6 +50,16 @@ If Phase B (extension/hybrid):
 
 metric만 보고 끝내지 않는다. 결과가 왜 그렇게 나왔는지를 코드와 중간값 수준에서 추적한다.
 
+4.0: 디버그 리포트 확인 (ALWAYS 먼저)
+- `results/runs/{latest}/debug/debug_summary.json` 확인 — errors, warnings, value_checks_flagged
+- errors > 0: `debug_report.md`의 Errors 섹션에서 traceback과 원인 파악
+- value_checks_flagged > 0: `value_checks.json`에서 어떤 값이 비정상인지 확인
+  - NaN/Inf → 수치 불안정 (gradient explosion, log(0), division by zero 등)
+  - Near-constant → model collapse, dead neurons, degenerate learning
+  - Out of range → 전처리 오류, normalization 문제
+- `debug_steps.json`에서 어떤 단계에서 문제가 발생했는지 timeline 확인
+- 디버그 리포트의 발견을 이후 분석의 시작점으로 사용
+
 4.1: 시각화 확인
 - `results/runs/{latest}/plots/` 에 저장된 시각화를 확인
 - Score distribution, confusion matrix, training curve 등에서 이상한 패턴이 보이는지 확인

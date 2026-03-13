@@ -142,21 +142,60 @@ def main():
     git_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     (output_dir / "git_commit.txt").write_text(git_commit)
 
+    # Initialize debug logger
+    try:
+        from scripts.debug_logger import DebugLogger
+        debug = DebugLogger(run_dir=output_dir)
+    except ImportError:
+        debug = None
+
     print(f"[runner] start: {output_dir.name}")
     print(f"[runner] config: {args.config}")
     print(f"[runner] git: {git_commit[:8]}")
 
+    if debug:
+        debug.log_config(config)
+        debug.step("init", status="ok", run_id=output_dir.name, git=git_commit[:8])
+
     try:
+        if debug:
+            debug.step_start("import_modules")
         from src.train import train
         from src.evaluate import evaluate
+        if debug:
+            debug.step_end("import_modules", status="ok")
 
+        if debug:
+            debug.step_start("training")
         model = train(config)
+        if debug:
+            debug.step_end("training", status="ok")
+
+        if debug:
+            debug.step_start("evaluation")
         metrics = evaluate(model, config)
+        if debug:
+            debug.step_end("evaluation", status="ok")
+
         metrics["status"] = "completed"
         print(f"[runner] primary metric: {metrics.get('primary_metric', {})}")
 
+        # Debug: validate output values
+        if debug:
+            pm = metrics.get("primary_metric", {})
+            if pm.get("value") is not None:
+                debug.value_check(
+                    "primary_metric", [pm["value"]],
+                    expected_range=(0, 1), expect_no_nan=True,
+                )
+            for name, val in metrics.get("secondary_metrics", {}).items():
+                if isinstance(val, (int, float)):
+                    debug.value_check(name, [val], expected_range=(0, 1))
+
     except ImportError:
         print("[runner] src/train.py or src/evaluate.py not found — saving dummy results")
+        if debug:
+            debug.step("import_modules", status="warning", detail="src modules not found")
         metrics = {
             "primary_metric": {"name": config.get("primary_metric", "metric"), "value": 0.0},
             "secondary_metrics": {},
@@ -167,11 +206,17 @@ def main():
         }
     except Exception as e:
         print(f"[runner] experiment failed: {e}")
+        if debug:
+            debug.log_exception("experiment", e)
         metrics = {"status": "failed", "error": str(e), "history": {}}
 
     save_metrics(output_dir, metrics, args.config)
     save_plots(output_dir, metrics)
     update_registry(output_dir, metrics)
+
+    if debug:
+        debug.step("save_complete", status="ok")
+        debug.finalize()
 
     print(f"[runner] done: {output_dir}")
 

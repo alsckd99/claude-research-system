@@ -99,6 +99,11 @@ claude-research-system/
 │   └── scheduler.py             ← periodic execution scheduler
 └── templates/
     └── project-skeleton/        ← minimal project structure
+        └── scripts/
+            ├── run_experiment.py       ← experiment execution + debug logging
+            ├── visualize_results.py    ← cross-run visualization (NEW)
+            ├── debug_logger.py         ← structured debug logging (NEW)
+            └── generate_decision_report.py  ← decision documentation (NEW)
 ```
 
 ---

@@ -35,8 +35,15 @@
 - 실패에서 배운 것
 
 ### Step 4: 시각화 종합
-각 run의 plots/에서 핵심 시각화를 모아서:
-- 전체 성능 추이 그래프 (iteration별)
+
+먼저 `python scripts/visualize_results.py --auto`를 실행하여 cross-run 시각화를 자동 생성한다.
+생성되는 시각화:
+- `results/reports/plots/metric_trend.png` — 전체 성능 추이 (improvement trajectory)
+- `results/reports/plots/secondary_comparison.png` — secondary metrics 비교
+- `results/reports/plots/improvement_waterfall.png` — run별 개선 delta
+- `results/reports/plots/run_status_summary.png` — 성공/실패 비율
+
+추가로 각 run의 plots/에서 핵심 시각화를 모아서:
 - 최종 best method의 주요 시각화
 - Ablation 결과 (있으면)
 - Before/after 비교
@@ -75,6 +82,15 @@ date: {date}
 {사용한 논문들}
 ```
 
+### Step 6: Decision Report 통합
+`python scripts/generate_decision_report.py --auto`를 실행하여 decision report를 생성한다.
+리포트의 Approach 섹션에 decision_report.md의 핵심 내용을 통합:
+- 왜 이 모델들을 선택했는지 (model_selection_log.md 기반)
+- 왜 이렇게 개선했는지 (synthesis_proposals.md 기반)
+- 각 실험의 디버깅 요약 (debug report 기반)
+
 ## Output
 - `results/report.md` — 전체 리포트
 - `results/report_plots/` — 리포트용 시각화 모음
+- `results/reports/decision_report.md` — 의사결정 추적 리포트
+- `results/reports/plots/` — cross-run 시각화

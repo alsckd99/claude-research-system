@@ -76,7 +76,28 @@ pytest -q tests/
 - multiple simultaneous proposals in one implementation
 - changing metrics without literature evidence (metric changes go through policy-evolver)
 
+### Step 6: Decision Documentation
+코드 수정 후 반드시 이유를 기록한다.
+
+`docs/handoff_method_reviser.md`에 아래 섹션을 포함:
+```
+## Decision Rationale — {date}
+### Why this method
+- 선택 근거: {어떤 논문/proposal에서 왔는지}
+- 기대 효과: {어떤 failure mode를 해결하는지}
+- 대안: {고려했지만 선택하지 않은 방법과 이유}
+
+### Why this implementation
+- 구현 방식 선택 이유: {왜 이렇게 구현했는지}
+- 논문과 다른 점: {있으면 명시하고 이유 설명}
+- Debug 결과 참조: {이전 run의 debug report에서 발견된 문제가 이 변경의 동기인 경우}
+
+### Expected outcome
+- 예상 primary metric 변화: {근거와 함께}
+- 리스크: {잘못될 수 있는 부분}
+```
+
 ## Output
 - updated src/ code (tests passing)
 - results/reports/next_actions.md updated with change plan
-- docs/handoff_method_reviser.md: what was changed, what is novel, rollback instructions
+- docs/handoff_method_reviser.md: what was changed, what is novel, rollback instructions, **decision rationale**

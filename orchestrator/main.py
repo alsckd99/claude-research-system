@@ -253,6 +253,26 @@ Lead with conclusions. Keep each item to 3 lines or fewer.
     print(f"\n[agent] saved: {out_path.name}")
 
 
+def phase_visualize(project: Path) -> None:
+    """Generate cross-run visualization plots and summary."""
+    print("\n[visualize] start")
+    viz_script = project / "scripts" / "visualize_results.py"
+    if not viz_script.exists():
+        print("  skip: scripts/visualize_results.py not found")
+        return
+    run([sys.executable, str(viz_script), "--auto"], cwd=project)
+
+
+def phase_decision_report(project: Path) -> None:
+    """Generate decision report documenting model choices and improvement rationale."""
+    print("\n[decision] start")
+    dec_script = project / "scripts" / "generate_decision_report.py"
+    if not dec_script.exists():
+        print("  skip: scripts/generate_decision_report.py not found")
+        return
+    run([sys.executable, str(dec_script), "--auto"], cwd=project)
+
+
 # --- helpers ---
 
 def _claude_available() -> bool:
@@ -331,6 +351,12 @@ def main():
 
     # 3. re-analyze
     context = phase_analyze(project)
+
+    # 4. visualize results
+    phase_visualize(project)
+
+    # 5. generate decision report
+    phase_decision_report(project)
 
     if args.mode == "full-loop":
         phase_literature(project, max_turns=args.max_turns)
