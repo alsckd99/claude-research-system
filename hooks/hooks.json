@@ -6,10 +6,6 @@
           {
             "type": "command",
             "command": "python3 -c \"\nimport os, json\nstate_file = 'results/reports/.session_state.json'\nif os.path.exists(state_file):\n    with open(state_file) as f:\n        state = json.load(f)\n    last = state.get('last_action', '')\n    loop = state.get('loop_iteration', 0)\n    metric = state.get('best_metric', 'unknown')\n    stall = state.get('stall_count', 0)\n    if last:\n        print(f'[session] resuming loop iteration {loop} — last: {last} — best metric: {metric}')\n        if stall >= 2:\n            print(f'[session] WARNING: {stall} consecutive loops with no improvement — escalation may be needed')\n        dont = state.get('do_not_retry', [])\n        if dont:\n            print('[session] do NOT retry:')\n            for d in dont[:3]:\n                print(f'  - {d}')\n\""
-          },
-          {
-            "type": "command",
-            "command": "python3 -c \"\nimport os, json\nfrom datetime import datetime, timedelta\nlog_file = 'docs/update_log.md'\nlast_check = None\nif os.path.exists(log_file):\n    with open(log_file) as f:\n        for line in f:\n            if line.startswith('## 20'):\n                try:\n                    date_str = line.split(' — ')[0].replace('## ', '').strip()\n                    last_check = datetime.strptime(date_str, '%Y-%m-%d')\n                except: pass\nnow = datetime.now()\nif last_check is None or (now - last_check) > timedelta(days=1):\n    days = (now - last_check).days if last_check else 'never'\n    print(f'[system-updater] last update check: {days} days ago — run system-updater skill to check for Claude Code updates')\n\""
           }
         ]
       }
@@ -50,16 +46,6 @@
           {
             "type": "command",
             "command": "[ -f scripts/validate_config.py ] && python scripts/validate_config.py || true"
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -c \"\nimport sys, json, os\nfrom datetime import datetime\ntry:\n    inp = json.load(sys.stdin)\nexcept:\n    sys.exit(0)\ntool = inp.get('tool_name', 'unknown')\nerr = inp.get('error', '')\nlog_dir = 'results/reports'\nif os.path.isdir(log_dir):\n    with open(f'{log_dir}/tool_failures.log', 'a') as f:\n        f.write(f'[{datetime.now().isoformat()}] {tool}: {str(err)[:200]}\\n')\nsys.exit(0)\n\""
           }
         ]
       }

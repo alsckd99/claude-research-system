@@ -3,94 +3,31 @@
 ## Trigger
 - "결과 정리해줘", "리포트 써줘"
 - 프로젝트 마무리 단계
-- 일정 수의 실험이 쌓였을 때
-
-## Purpose
-전체 실험 과정을 논문/발표 수준으로 정리한다.
 
 ## Steps
 
 ### Step 1: 전체 실험 히스토리 수집
-- results/registry.json — 모든 run 목록
-- results/runs/*/metrics.json — 각 run의 결과
-- results/runs/*/analysis/ — 각 run의 분석 기록
-- docs/baselines.md — 시도한 방법들
-- docs/research_log.md — 방향 변경 기록
-- docs/eval_policy.md — 평가 기준
+- results/registry.json, results/runs/*/metrics.json, results/runs/*/analysis/
+- docs/baselines.md, docs/research_log.md, docs/eval_policy.md
 
 ### Step 2: 요약 테이블 생성
-모든 방법을 비교하는 테이블:
-```
-| Method | Primary Metric | Secondary Metrics... | Notes |
-|--------|---------------|---------------------|-------|
-| baseline | ... | ... | ... |
-| method A | ... | ... | Phase A 재현 |
-| method A + mod | ... | ... | Phase B 개선 |
-```
+모든 방법 비교 테이블 (method, primary metric, secondary metrics, notes)
 
 ### Step 3: 핵심 발견 정리
-- 무엇을 시도했고 무엇이 됐는지
-- 왜 됐는지 / 안 됐는지 (root cause 분석 요약)
-- 가장 효과적이었던 변경과 그 근거
-- 실패에서 배운 것
+무엇을 시도했고 됐는지, 왜 됐/안됐는지, 가장 효과적이었던 변경, 실패에서 배운 것
 
 ### Step 4: 시각화 종합
+`python scripts/visualize_results.py --auto` 실행 → cross-run 시각화 자동 생성.
+각 run의 plots/에서 핵심 시각화 모아서 before/after 비교.
 
-먼저 `python scripts/visualize_results.py --auto`를 실행하여 cross-run 시각화를 자동 생성한다.
-생성되는 시각화:
-- `results/reports/plots/metric_trend.png` — 전체 성능 추이 (improvement trajectory)
-- `results/reports/plots/secondary_comparison.png` — secondary metrics 비교
-- `results/reports/plots/improvement_waterfall.png` — run별 개선 delta
-- `results/reports/plots/run_status_summary.png` — 성공/실패 비율
+### Step 5: Decision Report 통합
+`python scripts/generate_decision_report.py --auto` 실행.
+모델 선택 이유, 개선 방식 이유, 디버깅 요약을 Approach 섹션에 통합.
 
-추가로 각 run의 plots/에서 핵심 시각화를 모아서:
-- 최종 best method의 주요 시각화
-- Ablation 결과 (있으면)
-- Before/after 비교
-
-### Step 5: 리포트 작성
-
-```
-# {Project Name} — Experiment Report
-date: {date}
-
-## Objective
-{CLAUDE.md에서}
-
-## Approach
-{어떤 접근을 했는지 — 연구 방향, 선택한 모델, 적용한 기법}
-
-## Results Summary
-{Step 2의 비교 테이블}
-
-## Key Findings
-{Step 3}
-
-## What Worked
-{성능을 올린 변경들과 근거}
-
-## What Didn't Work
-{실패한 시도들과 원인}
-
-## Visualizations
-{Step 4}
-
-## Remaining Issues
-{아직 해결 안 된 문제, 추가 실험이 필요한 부분}
-
-## References
-{사용한 논문들}
-```
-
-### Step 6: Decision Report 통합
-`python scripts/generate_decision_report.py --auto`를 실행하여 decision report를 생성한다.
-리포트의 Approach 섹션에 decision_report.md의 핵심 내용을 통합:
-- 왜 이 모델들을 선택했는지 (model_selection_log.md 기반)
-- 왜 이렇게 개선했는지 (synthesis_proposals.md 기반)
-- 각 실험의 디버깅 요약 (debug report 기반)
+### Step 6: 리포트 작성
+`results/report.md` — Objective, Approach, Results, Key Findings, What Worked/Didn't, Visualizations, Remaining Issues, References
 
 ## Output
-- `results/report.md` — 전체 리포트
-- `results/report_plots/` — 리포트용 시각화 모음
-- `results/reports/decision_report.md` — 의사결정 추적 리포트
-- `results/reports/plots/` — cross-run 시각화
+- `results/report.md`
+- `results/reports/decision_report.md`
+- `results/reports/plots/`

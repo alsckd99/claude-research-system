@@ -43,9 +43,6 @@ python orchestrator/new_project.py \
     --output ~/projects/my-project
 ```
 
-Metrics are not set here. The researcher agent reads related papers and determines
-the standard evaluation metrics for your task domain.
-
 ---
 
 ## Run the autonomous loop
@@ -87,21 +84,17 @@ claude-research-system/
 ├── agents/
 │   ├── researcher.md            ← paper search, eval framework design
 │   ├── engineer.md              ← code implementation
-│   ├── runner.md                ← experiment execution
-│   ├── reviewer.md              ← result validation
-│   ├── policy_guard.md         ← policy review (protects immutable core)
-│   └── environment_manager.md  ← conda, dependency, GPU management
+│   └── policy_guard.md         ← policy review (protects immutable core)
 ├── skills/
 │   ├── bootstrap-project/       ← new project initialization
 │   ├── literature-scout/        ← paper search (Semantic Scholar, arXiv, OpenAlex)
 │   ├── experiment-runner/       ← run experiments + save results
-│   ├── result-analyzer/         ← failure classification + code-level deep analysis
+│   ├── result-analyzer/         ← failure classification + review + code-level deep analysis
 │   ├── method-reviser/          ← evidence-based code changes
 │   ├── policy-evolver/          ← incremental eval policy updates
 │   ├── data-auditor/            ← dataset quality/distribution analysis
 │   ├── ablation-planner/        ← component contribution verification
-│   ├── report-writer/           ← experiment report generation
-│   └── system-updater/          ← auto-check Claude Code updates
+│   └── report-writer/           ← experiment report generation
 ├── hooks/
 │   └── hooks.json               ← PreToolUse / PostToolUse / Stop hooks
 ├── orchestrator/
@@ -111,15 +104,16 @@ claude-research-system/
 └── templates/
     └── project-skeleton/        ← minimal project structure
         └── scripts/
-            ├── run_experiment.py       ← experiment execution + debug logging
-            ├── analyze_failures.py    ← failure pattern detection
-            ├── summarize_results.py   ← results summary report
-            ├── propose_next_steps.py  ← next action proposals
-            ├── validate_config.py     ← config validation
-            ├── save_session_state.py  ← session state persistence (hooks)
-            ├── visualize_results.py   ← cross-run visualization
-            ├── debug_logger.py        ← structured debug logging
-            └── generate_decision_report.py ← decision documentation
+            ├── run_experiment.py
+            ├── analyze_failures.py
+            ├── summarize_results.py
+            ├── propose_next_steps.py
+            ├── validate_config.py
+            ├── save_session_state.py
+            ├── visualize_results.py
+            ├── debug_logger.py
+            ├── generate_decision_report.py
+            └── server_utils.py
 ```
 
 ---
@@ -133,17 +127,10 @@ claude-research-system/
 | OpenAlex | fetch MCP (HTTP) | open-access metadata, supplementary |
 | Brave Search | brave-search MCP (optional) | benchmark leaderboards, GitHub repos, official docs |
 
-arXiv uses a dedicated MCP (`blazickjp/arxiv-mcp-server`) with structured tool calls instead of raw HTTP — more token-efficient and papers are cached at `~/.arxiv-mcp-server/papers`.
-
 ---
 
 ## References
 
-Design and tooling informed by:
-
-- [blazickjp/arxiv-mcp-server](https://github.com/blazickjp/arxiv-mcp-server) — arXiv MCP used for literature-scout
-- [ralph-wiggum plugin](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) — Stop hook loop pattern reference
-- [feature-dev plugin](https://github.com/anthropics/claude-code/tree/main/plugins/feature-dev) — multi-agent workflow structure reference
-- [Claude Code Plugins reference](https://code.claude.com/docs/en/plugins-reference.md) — plugin manifest format
-- [Awesome Claude Code](https://github.com/anthropics/awesome-claude-code)
+- [blazickjp/arxiv-mcp-server](https://github.com/blazickjp/arxiv-mcp-server) — arXiv MCP
+- [Claude Code Plugins reference](https://code.claude.com/docs/en/plugins-reference.md)
 - [Claude Code Docs](https://docs.anthropic.com/claude-code)

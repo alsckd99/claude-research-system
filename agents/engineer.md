@@ -31,8 +31,8 @@ Linter/formatter는 프로젝트에 설정되어 있으면 따른다 (ruff, blac
 ## Out of scope
 - editing CLAUDE.md Immutable Core
 - changing metrics (goes through policy-evolver + policy_guard)
-- running experiments (that is runner's job)
-- interpreting results (that is result-analyzer's job)
+- running experiments (experiment-runner skill)
+- interpreting results (result-analyzer skill)
 
 ## Handoff output
 After done criteria pass, write `docs/handoff_engineer.md`:
