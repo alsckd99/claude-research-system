@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"\nimport sys, json\ntry:\n    inp = json.load(sys.stdin)\nexcept:\n    sys.exit(0)\ncmd = inp.get('tool_input', {}).get('command', '')\nblocked = ['git push --force', 'git reset --hard', 'rm -rf', 'git clean -f']\nfor b in blocked:\n    if b in cmd:\n        print(f'[research-os] blocked: {b}', file=sys.stderr)\n        sys.exit(2)\nsys.exit(0)\n\""
+            "command": "python3 -c \"\nimport sys, json, os, re\ntry:\n    inp = json.load(sys.stdin)\nexcept:\n    sys.exit(0)\ncmd = inp.get('tool_input', {}).get('command', '')\nblocked = ['git push --force', 'git reset --hard', 'rm -rf', 'git clean -f']\nfor b in blocked:\n    if b in cmd:\n        print(f'[research-os] blocked: {b}', file=sys.stderr)\n        sys.exit(2)\n# block killing other users' processes\nkill_match = re.search(r'kill\\s+(?:-\\d+\\s+)?(\\d+)', cmd)\nif kill_match:\n    pid = int(kill_match.group(1))\n    try:\n        stat = open(f'/proc/{pid}/status').read()\n        for line in stat.splitlines():\n            if line.startswith('Uid:'):\n                proc_uid = int(line.split()[1])\n                if proc_uid != os.getuid():\n                    print(f'[research-os] blocked: cannot kill PID {pid} (belongs to another user)', file=sys.stderr)\n                    sys.exit(2)\n                break\n    except: pass\nsys.exit(0)\n\""
           }
         ]
       },

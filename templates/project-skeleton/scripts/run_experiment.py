@@ -149,6 +149,21 @@ def main():
     except ImportError:
         debug = None
 
+    # GPU safety: avoid other users' GPUs on shared servers
+    try:
+        from scripts.server_utils import find_free_gpus, gpu_summary
+        print(gpu_summary())
+        config_gpus = config.get("gpus", "")
+        if config_gpus not in ("cpu", ""):
+            free = find_free_gpus(n=1)
+            if free:
+                os.environ.setdefault("CUDA_VISIBLE_DEVICES", ",".join(str(g) for g in free))
+                print(f"[runner] using GPU: {os.environ['CUDA_VISIBLE_DEVICES']}")
+            else:
+                print("[runner] WARNING: no free GPU found — using config default")
+    except ImportError:
+        pass
+
     print(f"[runner] start: {output_dir.name}")
     print(f"[runner] config: {args.config}")
     print(f"[runner] git: {git_commit[:8]}")

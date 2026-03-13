@@ -34,8 +34,9 @@ Impact: {기존 계획에서 무엇이 바뀌는지}
 프로젝트 작업에 앞서 자동으로 수행 (사용자에게 묻지 않는다):
 
 1. system-updater — 최신 업데이트 확인. 중대 업데이트만 사용자에게 알림, 나머지는 자동 적용.
-2. GPU 확인 — `nvidia-smi`로 사용 가능한 GPU 자동 감지. 비어있는 GPU를 자동 선택.
-   - 가용 GPU가 없으면 그때만 사용자에게 질문.
+2. GPU 확인 — `python scripts/server_utils.py`로 GPU 상태 + 다른 사용자 확인.
+   - **다른 사용자가 사용 중인 GPU는 자동 회피** (`find_free_gpus(avoid_other_users=True)`)
+   - 비어있는 GPU를 자동 선택. 가용 GPU가 없으면 그때만 사용자에게 질문.
 
 ---
 

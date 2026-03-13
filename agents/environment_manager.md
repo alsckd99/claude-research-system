@@ -19,10 +19,17 @@ model: claude-sonnet-4-6
 - 해결 방법: 호환 가능한 버전 찾기, 불가능하면 별도 환경 분리
 - 충돌 기록: `docs/environment_notes.md`
 
-### GPU 관리
+### GPU 관리 (공유 서버 안전)
+- `python scripts/server_utils.py`로 현재 GPU 상태 확인 후 할당
+- **다른 사용자가 사용 중인 GPU는 자동 회피** — `find_free_gpus(avoid_other_users=True)`
 - CUDA_VISIBLE_DEVICES 설정 확인
 - 여러 실험 병렬 실행 시 GPU 할당
 - OOM 발생 시 batch size 조정 제안
+
+### 포트 관리 (공유 서버 안전)
+- TensorBoard, Jupyter 등 서비스 시작 시 `find_free_port(preferred=6006)` 사용
+- **사용 중인 포트에 바인딩하지 않는다** — 항상 비어있는 포트 확인 후 사용
+- 할당된 포트는 `docs/environment_notes.md`에 기록
 
 ### 환경 재현성
 - 실험마다 `pip freeze` 또는 `conda list` 결과를 run 디렉토리에 저장
