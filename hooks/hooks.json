@@ -50,6 +50,16 @@
         ]
       }
     ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"$CLAUDE_PROJECT_DIR/hooks/post_compact_rules.md\" 2>/dev/null || cat hooks/post_compact_rules.md 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "hooks": [
