@@ -37,6 +37,10 @@
           {
             "type": "command",
             "command": "CHANGED=$(git diff --name-only HEAD 2>/dev/null | grep '\\.py$' | tr '\\n' ' '); [ -n \"$CHANGED\" ] && command -v ruff >/dev/null 2>&1 && ruff check --fix $CHANGED 2>/dev/null || true; [ -n \"$CHANGED\" ] && command -v black >/dev/null 2>&1 && black $CHANGED 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport subprocess, sys, os\ntry:\n    subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True, check=True)\nexcept:\n    sys.exit(0)\nresult = subprocess.run(['git', 'diff', '--name-only'], capture_output=True, text=True)\nuntracked = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'], capture_output=True, text=True)\nchanged = [f for f in (result.stdout.strip() + '\\n' + untracked.stdout.strip()).split('\\n') if f.strip()]\nif not changed:\n    sys.exit(0)\nfor f in changed:\n    subprocess.run(['git', 'add', f])\nmsg = 'auto: update ' + ', '.join(os.path.basename(f) for f in changed[:5])\nif len(changed) > 5:\n    msg += f' (+{len(changed)-5} more)'\nsubprocess.run(['git', 'commit', '-m', msg, '--no-verify'], capture_output=True)\n\" 2>/dev/null || true"
           }
         ]
       },
@@ -46,6 +50,15 @@
           {
             "type": "command",
             "command": "[ -f scripts/validate_config.py ] && python scripts/validate_config.py || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport subprocess, sys, os, json\ntry:\n    inp = json.load(sys.stdin)\nexcept:\n    sys.exit(0)\ncmd = inp.get('tool_input', {}).get('command', '')\nif not any(kw in cmd for kw in ['python', 'pytest', 'make', 'conda', 'pip']):\n    sys.exit(0)\ntry:\n    subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True, check=True)\nexcept:\n    sys.exit(0)\nresult = subprocess.run(['git', 'diff', '--name-only'], capture_output=True, text=True)\nuntracked = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'], capture_output=True, text=True)\nchanged = [f for f in (result.stdout.strip() + '\\n' + untracked.stdout.strip()).split('\\n') if f.strip() and not f.endswith('.pyc') and '__pycache__' not in f]\nif not changed:\n    sys.exit(0)\nfor f in changed:\n    subprocess.run(['git', 'add', f])\nmsg = 'auto: update ' + ', '.join(os.path.basename(f) for f in changed[:5])\nif len(changed) > 5:\n    msg += f' (+{len(changed)-5} more)'\nsubprocess.run(['git', 'commit', '-m', msg, '--no-verify'], capture_output=True)\n\" 2>/dev/null || true"
           }
         ]
       }

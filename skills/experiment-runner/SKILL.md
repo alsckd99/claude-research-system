@@ -55,3 +55,9 @@ results/runs/{timestamp}/
 └── analysis/              # result-analyzer가 생성
 ```
 - results/registry.json도 함께 업데이트
+
+## Post-run: Workspace 정리
+```bash
+python scripts/organize_workspace.py --cleanup
+```
+흩어진 로그/시각화/임시 파일 정리 + 불필요 스크립트 아카이브.

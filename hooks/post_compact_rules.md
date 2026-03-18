@@ -5,6 +5,8 @@
 3. 시각화(plot)를 항상 생성하고 결과 디렉토리에 포함해라.
 4. 코드 단위로 디버깅하고 개선해라. 에러 발생 시 직접 분석하고 수정해라.
 5. 한 번에 하나의 변경만 적용 — 여러 method 동시 적용 금지.
-6. git add는 변경한 파일만 — git add -A 금지.
+6. git add는 변경한 파일만 — git add -A 금지. (auto-commit hook이 자동 처리)
 7. git push --force, rm -rf, git reset --hard 금지.
 8. CLAUDE.md와 .claude/rules/*.md의 규칙을 반드시 준수해라.
+9. 매 iteration 종료 시 workspace-organizer 실행: `python scripts/organize_workspace.py --cleanup`
+10. 디버깅 분석 파일(deep_analysis.md, debug_findings.md)은 반드시 results/runs/{timestamp}/analysis/에 저장.
