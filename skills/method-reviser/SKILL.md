@@ -25,7 +25,7 @@ allowed-tools: Bash(python*), Bash(pytest*), Read, Grep, Edit, Write
 ## Steps
 
 ### Step 1: Read context
-1. results/reports/error_analysis.md
+1. results/{latest_timestamp}/report/error_analysis.md
 2. docs/synthesis_proposals.md — ranked proposals
 3. docs/baselines.md — individual methods
 4. Current src/ code
@@ -36,7 +36,7 @@ Mode A — Faithful reproduction (new method): 논문 그대로 구현, within 5
 Mode B — Improvement (Mode A 성공 후): synthesis_proposals.md에서 최고 순위 proposal 적용, 기존 구현은 config flag로 유지
 
 ### Step 3: Change plan
-Document in results/reports/next_actions.md: 무엇을 변경하는지, 기대 효과, rollback 조건, test plan.
+Document in results/{latest_timestamp}/report/next_actions.md: 무엇을 변경하는지, 기대 효과, rollback 조건, test plan.
 
 ### Step 4: Implement
 - One change at a time

@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Workspace organizer — auto-organize scattered files and archive obsolete scripts."""
+"""Workspace organizer — auto-organize scattered files and archive obsolete scripts.
+
+All results go under results/{YYYYMMDD_HHMMSS}/:
+  metrics.json, config_snapshot.yaml, git_commit.txt
+  plots/       — visualizations
+  debug/       — debug logs
+  analysis/    — deep analysis, gap analysis, debug findings
+  report/      — error analysis, next actions, decision report
+
+Only results/registry.json and results/final_report.md live at results root.
+"""
 
 import argparse
 import os
@@ -11,7 +21,6 @@ from pathlib import Path
 
 
 def get_project_root() -> Path:
-    """Find git root or use cwd."""
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
@@ -22,82 +31,95 @@ def get_project_root() -> Path:
         return Path.cwd()
 
 
-def find_latest_run(root: Path) -> str | None:
-    """Find the latest timestamp run directory."""
-    runs_dir = root / "results" / "runs"
-    if not runs_dir.exists():
+def find_latest_timestamp(root: Path) -> str | None:
+    """Find the latest timestamp directory under results/."""
+    results_dir = root / "results"
+    if not results_dir.exists():
         return None
+
+    ts_pattern = re.compile(r"\d{8}_\d{6}")
     dirs = sorted(
-        [d.name for d in runs_dir.iterdir() if d.is_dir() and re.match(r"\d{8}_\d{6}", d.name)],
+        [d.name for d in results_dir.iterdir()
+         if d.is_dir() and ts_pattern.match(d.name)],
         reverse=True,
     )
     return dirs[0] if dirs else None
 
 
+def ensure_timestamp_dir(root: Path) -> Path:
+    """Get latest timestamp dir or create a new one."""
+    ts = find_latest_timestamp(root)
+    if ts:
+        d = root / "results" / ts
+    else:
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        d = root / "results" / ts
+        d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def organize_files(root: Path) -> list[str]:
-    """Move scattered files into proper directories."""
+    """Move scattered files into proper timestamp directories."""
     today = datetime.now().strftime("%Y%m%d")
-    latest_run = find_latest_run(root)
+    ts_dir = ensure_timestamp_dir(root)
+    ts_name = ts_dir.name
     moved: list[str] = []
 
-    rules: list[tuple[str, str, Path]] = [
-        # (glob pattern relative to root, file check, target dir)
-    ]
+    # === Project root cleanup ===
 
-    # Rule 1: log files → logs/YYYYMMDD/
+    # Log files → logs/YYYYMMDD/
     log_dir = root / "logs" / today
-    for f in list(root.glob("*.log")) + list((root / "logs").glob("*.log")) if (root / "logs").exists() else list(root.glob("*.log")):
-        if f.parent == root or f.parent == root / "logs":
+    log_sources = list(root.glob("*.log"))
+    if (root / "logs").exists():
+        log_sources += [f for f in (root / "logs").glob("*.log") if f.parent == root / "logs"]
+    for f in log_sources:
+        if f.parent in (root, root / "logs"):
             log_dir.mkdir(parents=True, exist_ok=True)
             dest = log_dir / f.name
             if not dest.exists():
                 shutil.move(str(f), str(dest))
                 moved.append(f"  {f.name} → logs/{today}/")
 
-    # Rule 2: images/pdf at root → results/reports/plots/
-    plots_dir = root / "results" / "reports" / "plots"
-    for ext in ("*.png", "*.jpg", "*.jpeg", "*.pdf"):
+    # Images/PDF at root → results/{timestamp}/plots/
+    plots_dir = ts_dir / "plots"
+    for ext in ("*.png", "*.jpg", "*.jpeg"):
         for f in root.glob(ext):
             if f.parent == root:
                 plots_dir.mkdir(parents=True, exist_ok=True)
                 dest = plots_dir / f.name
                 if not dest.exists():
                     shutil.move(str(f), str(dest))
-                    moved.append(f"  {f.name} → results/reports/plots/")
+                    moved.append(f"  {f.name} → results/{ts_name}/plots/")
 
-    # Rule 3: *_results*.json at root → results/
-    results_dir = root / "results"
+    # *_results*.json at root → results/{timestamp}/
     for f in root.glob("*_results*.json"):
         if f.parent == root:
-            results_dir.mkdir(parents=True, exist_ok=True)
-            dest = results_dir / f.name
+            dest = ts_dir / f.name
             if not dest.exists():
                 shutil.move(str(f), str(dest))
-                moved.append(f"  {f.name} → results/")
+                moved.append(f"  {f.name} → results/{ts_name}/")
 
-    # Rule 4: debug files at root → latest run debug/
-    if latest_run:
-        debug_dir = root / "results" / "runs" / latest_run / "debug"
-        for f in root.glob("debug_*"):
-            if f.parent == root and f.is_file():
-                debug_dir.mkdir(parents=True, exist_ok=True)
-                dest = debug_dir / f.name
-                if not dest.exists():
-                    shutil.move(str(f), str(dest))
-                    moved.append(f"  {f.name} → results/runs/{latest_run}/debug/")
+    # debug_* at root → results/{timestamp}/debug/
+    debug_dir = ts_dir / "debug"
+    for f in root.glob("debug_*"):
+        if f.parent == root and f.is_file():
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            dest = debug_dir / f.name
+            if not dest.exists():
+                shutil.move(str(f), str(dest))
+                moved.append(f"  {f.name} → results/{ts_name}/debug/")
 
-    # Rule 5: analysis files at root → latest run analysis/
-    if latest_run:
-        analysis_dir = root / "results" / "runs" / latest_run / "analysis"
-        for f in root.glob("*_analysis*"):
-            if f.parent == root and f.is_file():
-                analysis_dir.mkdir(parents=True, exist_ok=True)
-                dest = analysis_dir / f.name
-                if not dest.exists():
-                    shutil.move(str(f), str(dest))
-                    moved.append(f"  {f.name} → results/runs/{latest_run}/analysis/")
+    # *_analysis* at root → results/{timestamp}/analysis/
+    analysis_dir = ts_dir / "analysis"
+    for f in root.glob("*_analysis*"):
+        if f.parent == root and f.is_file():
+            analysis_dir.mkdir(parents=True, exist_ok=True)
+            dest = analysis_dir / f.name
+            if not dest.exists():
+                shutil.move(str(f), str(dest))
+                moved.append(f"  {f.name} → results/{ts_name}/analysis/")
 
-    # Rule 6: tmp/temp files → _archive/YYYYMMDD/
+    # tmp/temp at root → _archive/
     archive_dir = root / "_archive" / today
     for pattern in ("tmp_*", "temp_*"):
         for f in root.glob(pattern):
@@ -107,6 +129,89 @@ def organize_files(root: Path) -> list[str]:
                 if not dest.exists():
                     shutil.move(str(f), str(dest))
                     moved.append(f"  {f.name} → _archive/{today}/")
+
+    # === results/ root cleanup — move stray files into latest timestamp ===
+
+    results_root = root / "results"
+    if results_root.exists():
+        # Stray files at results root (except registry.json, final_report.md)
+        keep_at_root = {"registry.json", "final_report.md"}
+        for f in results_root.iterdir():
+            if f.is_file() and f.name not in keep_at_root:
+                # JSON results → timestamp root
+                if f.suffix == ".json":
+                    dest = ts_dir / f.name
+                # MD reports → timestamp/report/
+                elif f.suffix == ".md":
+                    report_dir = ts_dir / "report"
+                    report_dir.mkdir(parents=True, exist_ok=True)
+                    dest = report_dir / f.name
+                # Images → timestamp/plots/
+                elif f.suffix in (".png", ".jpg", ".jpeg"):
+                    plots_dir.mkdir(parents=True, exist_ok=True)
+                    dest = plots_dir / f.name
+                else:
+                    continue
+                if not dest.exists():
+                    shutil.move(str(f), str(dest))
+                    moved.append(f"  results/{f.name} → results/{ts_name}/{dest.relative_to(ts_dir)}")
+
+        # results/reports/ → distribute into timestamp dirs
+        reports_dir = results_root / "reports"
+        if reports_dir.exists() and reports_dir.is_dir():
+            # reports/plots/ → timestamp/plots/
+            rplots = reports_dir / "plots"
+            if rplots.exists():
+                plots_dir.mkdir(parents=True, exist_ok=True)
+                for f in rplots.iterdir():
+                    if f.is_file():
+                        dest = plots_dir / f.name
+                        if not dest.exists():
+                            shutil.move(str(f), str(dest))
+                            moved.append(f"  results/reports/plots/{f.name} → results/{ts_name}/plots/")
+                # Remove empty plots dir
+                if not any(rplots.iterdir()):
+                    rplots.rmdir()
+
+            # reports/*.md → timestamp/report/
+            report_dir = ts_dir / "report"
+            for f in reports_dir.iterdir():
+                if f.is_file():
+                    report_dir.mkdir(parents=True, exist_ok=True)
+                    dest = report_dir / f.name
+                    if not dest.exists():
+                        shutil.move(str(f), str(dest))
+                        moved.append(f"  results/reports/{f.name} → results/{ts_name}/report/")
+
+            # Remove empty reports dir
+            try:
+                if reports_dir.exists() and not any(reports_dir.iterdir()):
+                    reports_dir.rmdir()
+            except OSError:
+                pass
+
+        # results/runs/ → migrate to results/{timestamp}/ structure
+        runs_dir = results_root / "runs"
+        if runs_dir.exists() and runs_dir.is_dir():
+            for run in runs_dir.iterdir():
+                if run.is_dir() and re.match(r"\d{8}_\d{6}", run.name):
+                    target = results_root / run.name
+                    if not target.exists():
+                        shutil.move(str(run), str(target))
+                        moved.append(f"  results/runs/{run.name}/ → results/{run.name}/")
+                    else:
+                        # Merge contents
+                        for item in run.iterdir():
+                            dest = target / item.name
+                            if not dest.exists():
+                                shutil.move(str(item), str(dest))
+                                moved.append(f"  results/runs/{run.name}/{item.name} → results/{run.name}/")
+            # Remove empty runs dir
+            try:
+                if runs_dir.exists() and not any(runs_dir.iterdir()):
+                    runs_dir.rmdir()
+            except OSError:
+                pass
 
     return moved
 
@@ -123,20 +228,17 @@ TEMP_PREFIXES = ("tmp_", "test_", "debug_", "scratch_", "fix_")
 
 
 def is_referenced(script: Path, root: Path) -> bool:
-    """Check if a script is referenced by other files."""
-    name = script.stem  # without .py
-    fname = script.name  # with .py
+    name = script.stem
+    fname = script.name
 
     # Check hooks.json
-    hooks_file = root / "hooks" / "hooks.json"
-    if not hooks_file.exists():
-        hooks_file = root / ".claude" / "hooks" / "hooks.json"
-    if hooks_file.exists():
-        content = hooks_file.read_text()
-        if fname in content or name in content:
-            return True
+    for hooks_path in (root / "hooks" / "hooks.json", root / ".claude" / "hooks" / "hooks.json"):
+        if hooks_path.exists():
+            content = hooks_path.read_text()
+            if fname in content or name in content:
+                return True
 
-    # Check other py/sh/yaml/md files for references
+    # Check other files for references
     for ext in ("**/*.py", "**/*.sh", "**/*.yaml", "**/*.yml", "**/*.md"):
         for f in root.glob(ext):
             if f == script or "_archive" in str(f) or "__pycache__" in str(f):
@@ -152,7 +254,6 @@ def is_referenced(script: Path, root: Path) -> bool:
 
 
 def cleanup_scripts(root: Path) -> list[str]:
-    """Find and archive obsolete scripts."""
     scripts_dir = root / "scripts"
     if not scripts_dir.exists():
         return []
@@ -167,20 +268,16 @@ def cleanup_scripts(root: Path) -> list[str]:
         if script.name.startswith("__"):
             continue
 
-        # Check if it's a temp script
         is_temp = any(script.name.startswith(p) for p in TEMP_PREFIXES)
-
-        # Check if referenced anywhere
         referenced = is_referenced(script, root)
 
         if not referenced or is_temp:
-            # Verify it's committed to git
+            # Verify it's committed to git before archiving
             result = subprocess.run(
                 ["git", "log", "--oneline", "-1", "--", str(script)],
                 capture_output=True, text=True,
             )
             if not result.stdout.strip():
-                # Not in git — commit first
                 subprocess.run(["git", "add", str(script)], capture_output=True)
                 subprocess.run(
                     ["git", "commit", "-m", f"chore: save {script.name} before archive"],
@@ -206,12 +303,7 @@ def cleanup_scripts(root: Path) -> list[str]:
 
 
 def git_commit(root: Path, msg: str) -> None:
-    """Stage changes and commit."""
     subprocess.run(["git", "add", "-A"], cwd=root, capture_output=True)
-    subprocess.run(
-        ["git", "diff", "--staged", "--quiet"],
-        cwd=root, capture_output=True,
-    )
     subprocess.run(
         ["git", "commit", "-m", msg, "--no-verify"],
         cwd=root, capture_output=True,

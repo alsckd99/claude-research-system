@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--action", default="checkpoint", help="action label for state")
     args = parser.parse_args()
 
-    reports_dir = "results/reports"
+    reports_dir = "results"
     if not os.path.isdir(reports_dir):
         return
 

@@ -5,7 +5,7 @@ Captures intermediate values, timing, and diagnostics at each pipeline step.
 Usage:
     from scripts.debug_logger import DebugLogger
 
-    logger = DebugLogger(run_dir="results/runs/20260313_120000")
+    logger = DebugLogger(run_dir="results/20260313_120000")
     logger.step("data_loading", status="ok", rows=1000, shape=(1000, 512))
     logger.step("model_init", status="ok", params=1_200_000)
     logger.step("inference", status="ok", output_shape=(1000, 2), time_sec=3.2)

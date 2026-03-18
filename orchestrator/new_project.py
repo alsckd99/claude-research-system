@@ -35,7 +35,7 @@ CLAUDE_MD_TEMPLATE = """\
 ### Required Validation
 1. Reproduce baseline before implementing any new method
 2. `pytest -q` must pass after every code change
-3. Save results under `results/runs/{{timestamp}}/` for every run
+3. Save results under `results/{{timestamp}}/` for every run
 
 ### Forbidden Actions
 - Hardcoding (all config values go in configs/*.yaml)

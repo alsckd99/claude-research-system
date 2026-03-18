@@ -7,6 +7,19 @@ from datetime import datetime
 from pathlib import Path
 
 
+def _find_latest_timestamp() -> str | None:
+    import re
+    results_dir = Path("results")
+    if not results_dir.exists():
+        return None
+    dirs = sorted(
+        [d.name for d in results_dir.iterdir()
+         if d.is_dir() and re.match(r"\d{8}_\d{6}", d.name)],
+        reverse=True,
+    )
+    return dirs[0] if dirs else None
+
+
 def load_registry() -> list:
     registry_path = Path("results/registry.json")
     if not registry_path.exists():
@@ -115,7 +128,12 @@ _Updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_
 {generate_next_actions(runs, trend, failures)}
 """
 
-    output_path = Path("results/reports/next_actions.md")
+    # Save to latest timestamp directory
+    latest_ts = _find_latest_timestamp()
+    if latest_ts:
+        output_path = Path(f"results/{latest_ts}/report/next_actions.md")
+    else:
+        output_path = Path("results/next_actions.md")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content)
 

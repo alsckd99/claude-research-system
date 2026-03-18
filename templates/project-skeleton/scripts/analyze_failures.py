@@ -7,6 +7,20 @@ from datetime import datetime
 from pathlib import Path
 
 
+def _find_latest_timestamp() -> str | None:
+    """Find the latest YYYYMMDD_HHMMSS directory under results/."""
+    import re
+    results_dir = Path("results")
+    if not results_dir.exists():
+        return None
+    dirs = sorted(
+        [d.name for d in results_dir.iterdir()
+         if d.is_dir() and re.match(r"\d{8}_\d{6}", d.name)],
+        reverse=True,
+    )
+    return dirs[0] if dirs else None
+
+
 def load_recent_runs(n: int = 10) -> list:
     registry_path = Path("results/registry.json")
     if not registry_path.exists():
@@ -128,7 +142,12 @@ def main():
     analysis = analyze_runs(runs_with_metrics)
     report = generate_error_analysis(runs_with_metrics, analysis)
 
-    output_path = Path("results/reports/error_analysis.md")
+    # Save to latest timestamp directory
+    latest_ts = _find_latest_timestamp()
+    if latest_ts:
+        output_path = Path(f"results/{latest_ts}/report/error_analysis.md")
+    else:
+        output_path = Path("results/error_analysis.md")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report)
 

@@ -233,7 +233,7 @@ def main():
         return
 
     if not args.foreground:
-        print(f"[scheduler] daemonizing... log: {project}/results/reports/scheduler.log")
+        print(f"[scheduler] daemonizing... log: {project}/logs/scheduler.log")
         print(f"[scheduler] stop: python orchestrator/scheduler.py --project {project} --stop")
         daemonize(project)
     else:

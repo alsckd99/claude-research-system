@@ -91,7 +91,7 @@ Triggered after experiment failure analysis.
 Files to read:
 1. CLAUDE.md — objective
 2. docs/eval_policy.md
-3. results/reports/error_analysis.md — failure patterns
+3. results/{latest_timestamp}/report/error_analysis.md — failure patterns
 4. docs/baselines.md — already reviewed methods
 
 Search sources:

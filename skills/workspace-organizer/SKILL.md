@@ -10,7 +10,7 @@ allowed-tools: Bash(python*), Bash(find*), Bash(mv*), Bash(mkdir*), Read, Grep, 
 ## Contract
 - 삭제 전 반드시 git에 커밋되어 있는지 확인한다 — 커밋 안 된 파일은 삭제하지 않는다.
 - 아카이브는 삭제가 아니라 `_archive/` 디렉토리로 이동이다.
-- results/, docs/ 내 분석 파일은 절대 삭제하지 않는다.
+- `results/{timestamp}/` 내 파일은 절대 삭제하지 않는다.
 
 ## Trigger
 - 매 improvement loop iteration 종료 후 자동 실행
@@ -18,17 +18,20 @@ allowed-tools: Bash(python*), Bash(find*), Bash(mv*), Bash(mkdir*), Read, Grep, 
 
 ## Part 1: 파일 자동 정리 (organize)
 
-프로젝트 루트에 흩어진 파일들을 기능/timestamp별 디렉토리로 정리.
+프로젝트 루트나 잘못된 위치에 흩어진 파일들을 올바른 timestamp 디렉토리로 정리.
 
 ### 규칙
 
 | 파일 패턴 | 이동 대상 |
 |---|---|
 | `*.log` (루트 또는 logs/) | `logs/YYYYMMDD/` |
-| `*.png`, `*.jpg`, `*.pdf` (루트) | `results/reports/plots/` |
-| `*_results*.json` (루트) | `results/` |
-| `debug_*.md`, `debug_*.json` (루트) | 해당 run의 `results/runs/{latest}/debug/` |
-| `*_analysis*.md` (루트) | `results/runs/{latest}/analysis/` |
+| `*.png`, `*.jpg`, `*.pdf` (루트) | `results/{latest_timestamp}/plots/` |
+| `*_results*.json` (루트) | `results/{latest_timestamp}/` |
+| `debug_*.md`, `debug_*.json` (루트) | `results/{latest_timestamp}/debug/` |
+| `*_analysis*.md` (루트) | `results/{latest_timestamp}/analysis/` |
+| `error_analysis.md`, `next_actions.md` (results 루트) | `results/{latest_timestamp}/report/` |
+| `decision_report.md` (results 루트) | `results/{latest_timestamp}/report/` |
+| `results/reports/plots/*` | `results/{latest_timestamp}/plots/` |
 | `tmp_*`, `temp_*` | `_archive/{YYYYMMDD}/` |
 
 ### 실행 방법
@@ -73,6 +76,6 @@ python scripts/organize_workspace.py --cleanup
 3. git commit
 
 ## Output
-- 정리된 디렉토리 구조
+- 정리된 `results/{timestamp}/` 구조
 - `_archive/` — 아카이브된 파일들
 - `_archive/scripts/archive_log.md` — 아카이브 로그

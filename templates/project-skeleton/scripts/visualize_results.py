@@ -5,7 +5,7 @@ Only shows top N runs by default to avoid clutter.
 
 Usage:
     python scripts/visualize_results.py --auto
-    python scripts/visualize_results.py --output results/reports/plots --top 10
+    python scripts/visualize_results.py --top 10
 """
 import argparse
 import json
@@ -18,14 +18,29 @@ from typing import Any
 DEFAULT_TOP_N = 10
 
 
+def _find_latest_timestamp(results_dir: Path) -> str | None:
+    import re
+    if not results_dir.exists():
+        return None
+    dirs = sorted(
+        [d.name for d in results_dir.iterdir()
+         if d.is_dir() and re.match(r"\d{8}_\d{6}", d.name)],
+        reverse=True,
+    )
+    return dirs[0] if dirs else None
+
+
 def load_all_runs(results_dir: Path) -> list[dict[str, Any]]:
-    """Load metrics from all completed runs, sorted by timestamp."""
+    """Load metrics from all timestamp directories, sorted by timestamp."""
+    import re
     runs = []
-    runs_dir = results_dir / "runs"
-    if not runs_dir.exists():
+
+    if not results_dir.exists():
         return runs
 
-    for run_dir in sorted(runs_dir.iterdir()):
+    for run_dir in sorted(results_dir.iterdir()):
+        if not run_dir.is_dir() or not re.match(r"\d{8}_\d{6}", run_dir.name):
+            continue
         metrics_file = run_dir / "metrics.json"
         if not metrics_file.exists():
             continue
@@ -275,14 +290,23 @@ def generate_summary_text(runs: list[dict], output_dir: Path) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Cross-run visualization generator")
     parser.add_argument("--auto", action="store_true", help="Auto mode (no prompts)")
-    parser.add_argument("--output", default="results/reports/plots",
-                        help="Output directory for plots")
+    parser.add_argument("--output", default=None,
+                        help="Output directory for plots (default: results/{latest}/plots)")
     parser.add_argument("--top", type=int, default=DEFAULT_TOP_N,
                         help=f"Max runs to show in detailed charts (default: {DEFAULT_TOP_N})")
     args = parser.parse_args()
 
     results_dir = Path("results")
-    output_dir = Path(args.output)
+
+    # Determine output directory
+    if args.output:
+        output_dir = Path(args.output)
+    else:
+        latest_ts = _find_latest_timestamp(results_dir)
+        if latest_ts:
+            output_dir = results_dir / latest_ts / "plots"
+        else:
+            output_dir = results_dir / "plots"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     runs = load_all_runs(results_dir)

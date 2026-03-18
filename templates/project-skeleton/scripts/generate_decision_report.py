@@ -5,7 +5,7 @@ into a unified decision log with visualized decision flow.
 
 Usage:
     python scripts/generate_decision_report.py --auto
-    python scripts/generate_decision_report.py --output results/reports/decision_report.md
+    python scripts/generate_decision_report.py --auto
 """
 import argparse
 import json
@@ -18,13 +18,29 @@ def read_file(path: Path) -> str:
     return path.read_text().strip() if path.exists() else ""
 
 
+def _find_latest_timestamp(results_dir: Path) -> str | None:
+    import re
+    if not results_dir.exists():
+        return None
+    dirs = sorted(
+        [d.name for d in results_dir.iterdir()
+         if d.is_dir() and re.match(r"\d{8}_\d{6}", d.name)],
+        reverse=True,
+    )
+    return dirs[0] if dirs else None
+
+
 def load_runs(results_dir: Path) -> list[dict[str, Any]]:
     """Load all run metrics sorted by timestamp."""
+    import re
     runs = []
-    runs_dir = results_dir / "runs"
-    if not runs_dir.exists():
+
+    if not results_dir.exists():
         return runs
-    for run_dir in sorted(runs_dir.iterdir()):
+
+    for run_dir in sorted(results_dir.iterdir()):
+        if not run_dir.is_dir() or not re.match(r"\d{8}_\d{6}", run_dir.name):
+            continue
         metrics_file = run_dir / "metrics.json"
         if not metrics_file.exists():
             continue
@@ -286,7 +302,8 @@ def generate_report(
 def main():
     parser = argparse.ArgumentParser(description="Decision report generator")
     parser.add_argument("--auto", action="store_true")
-    parser.add_argument("--output", default="results/reports/decision_report.md")
+    parser.add_argument("--output", default=None,
+                        help="Output path (default: results/{latest}/report/decision_report.md)")
     args = parser.parse_args()
 
     project_dir = Path(".").resolve()
@@ -300,7 +317,14 @@ def main():
 
     report = generate_report(project_dir, runs, models, proposals, handoffs)
 
-    output_path = Path(args.output)
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        latest_ts = _find_latest_timestamp(results_dir)
+        if latest_ts:
+            output_path = Path(f"results/{latest_ts}/report/decision_report.md")
+        else:
+            output_path = Path("results/decision_report.md")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report)
 

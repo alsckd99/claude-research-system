@@ -18,7 +18,9 @@ allowed-tools: Bash(python*), Read, Grep, Glob, Edit, Write
 ## Steps
 
 ### Step 1: 전체 실험 히스토리 수집
-- results/registry.json, results/runs/*/metrics.json, results/runs/*/analysis/
+- results/registry.json
+- results/*/metrics.json (각 timestamp 디렉토리)
+- results/*/analysis/ (각 timestamp의 분석 결과)
 - docs/baselines.md, docs/research_log.md, docs/eval_policy.md
 
 ### Step 2: 요약 테이블 생성
@@ -28,15 +30,24 @@ allowed-tools: Bash(python*), Read, Grep, Glob, Edit, Write
 무엇을 시도했고 됐는지, 왜 됐/안됐는지, 가장 효과적이었던 변경, 실패에서 배운 것
 
 ### Step 4: 시각화 종합
-`python scripts/visualize_results.py --auto` 실행 → cross-run 시각화 자동 생성.
+`python scripts/visualize_results.py --auto` 실행.
+cross-run 시각화는 최신 timestamp 디렉토리의 `plots/`에 저장:
+- `results/{latest_timestamp}/plots/cross_run_comparison.png`
+- `results/{latest_timestamp}/plots/metric_trend.png`
 
 ### Step 5: Decision Report 통합
 `python scripts/generate_decision_report.py --auto` 실행.
+결과는 `results/{latest_timestamp}/report/decision_report.md`에 저장.
 
 ### Step 6: 리포트 작성
-`results/report.md` — Objective, Approach, Results, Key Findings, What Worked/Didn't, Visualizations, Remaining Issues, References
+
+**Iteration 리포트** → `results/{latest_timestamp}/report/iteration_report.md`
+- 이번 iteration의 상세 결과
+
+**최종 종합 리포트** → `results/final_report.md` (유일하게 results 루트에 위치)
+- Objective, Approach, Results, Key Findings, What Worked/Didn't, Visualizations, Remaining Issues, References
 
 ## Output
-- `results/report.md`
-- `results/reports/decision_report.md`
-- `results/reports/plots/`
+- `results/{timestamp}/report/` — iteration별 리포트, decision report
+- `results/{timestamp}/plots/` — cross-run 시각화
+- `results/final_report.md` — 최종 종합 리포트 (results 루트의 유일한 md 파일)

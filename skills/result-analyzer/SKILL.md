@@ -38,11 +38,11 @@ Phase B: Phase A 대비 개선 여부, 어떤 부분이 gain을 drove했는지
 
 ### Step 4: Deep analysis — 코드와 값 수준 디버깅
 
-4.0: `results/runs/{latest}/debug/debug_summary.json` 확인
+4.0: `results/{timestamp}/debug/debug_summary.json` 확인
 - errors > 0 → debug_report.md에서 traceback
 - value_checks_flagged > 0 → NaN/Inf, near-constant, out of range
 
-4.1: 시각화 확인 (plots/)
+4.1: 시각화 확인 (`results/{timestamp}/plots/`)
 
 4.2: 중간값 검증 — output, feature/embedding, input data, 수식/계산
 
@@ -67,11 +67,17 @@ Same failure pattern 3+ consecutive runs → promote to learned rule in CLAUDE.m
 - hypotheses and facts clearly distinguished
 - confidence ≥80% for flagging issues; borderline → "low-confidence observation"
 
-## Logging
-분석 결과는 `results/runs/{timestamp}/analysis/`에 저장:
-- sanity_checks.json, deep_analysis.md, debug_findings.md, gap_analysis.md
+## Output — 모두 해당 timestamp 디렉토리에 저장
+분석 결과는 `results/{timestamp}/analysis/`에 저장:
+- sanity_checks.json — sanity check 결과
+- deep_analysis.md — 코드 수준 심층 분석
+- debug_findings.md — 디버깅 발견 사항
+- gap_analysis.md — 논문 대비 차이 분석
 
-## Output files
-- results/runs/{latest}/analysis/
-- results/reports/error_analysis.md
-- results/reports/next_actions.md
+리포트는 `results/{timestamp}/report/`에 저장:
+- error_analysis.md — 에러 분류 및 원인
+- next_actions.md — 다음 단계 제안
+
+## IMPORTANT: 파일 저장 규칙
+- results 루트나 results/reports/에 파일을 두지 않는다
+- 모든 분석/리포트는 반드시 `results/{timestamp}/` 하위에 저장

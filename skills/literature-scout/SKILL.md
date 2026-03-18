@@ -31,4 +31,4 @@ allowed-tools: Read, Grep, Glob, WebFetch, WebSearch
 - `docs/literature_survey.md` — 전체 조사 결과 (20편+, 간략 분석 포함)
 - `docs/model_selection_log.md` — 선별 모델의 채택 근거 상세
 - docs/baselines.md updated
-- results/reports/next_actions.md updated
+- results/{latest_timestamp}/report/next_actions.md updated

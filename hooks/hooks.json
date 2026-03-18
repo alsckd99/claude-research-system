@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"\nimport os, json\nstate_file = 'results/reports/.session_state.json'\nif os.path.exists(state_file):\n    with open(state_file) as f:\n        state = json.load(f)\n    last = state.get('last_action', '')\n    loop = state.get('loop_iteration', 0)\n    metric = state.get('best_metric', 'unknown')\n    stall = state.get('stall_count', 0)\n    if last:\n        print(f'[session] resuming loop iteration {loop} — last: {last} — best metric: {metric}')\n        if stall >= 2:\n            print(f'[session] WARNING: {stall} consecutive loops with no improvement — escalation may be needed')\n        dont = state.get('do_not_retry', [])\n        if dont:\n            print('[session] do NOT retry:')\n            for d in dont[:3]:\n                print(f'  - {d}')\n\""
+            "command": "python3 -c \"\nimport os, json\nstate_file = 'results/.session_state.json'\nif os.path.exists(state_file):\n    with open(state_file) as f:\n        state = json.load(f)\n    last = state.get('last_action', '')\n    loop = state.get('loop_iteration', 0)\n    metric = state.get('best_metric', 'unknown')\n    stall = state.get('stall_count', 0)\n    if last:\n        print(f'[session] resuming loop iteration {loop} — last: {last} — best metric: {metric}')\n        if stall >= 2:\n            print(f'[session] WARNING: {stall} consecutive loops with no improvement — escalation may be needed')\n        dont = state.get('do_not_retry', [])\n        if dont:\n            print('[session] do NOT retry:')\n            for d in dont[:3]:\n                print(f'  - {d}')\n\""
           }
         ]
       }

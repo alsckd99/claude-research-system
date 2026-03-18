@@ -1,11 +1,24 @@
 """
-최근 실험 결과를 요약하여 results/reports/latest.md를 갱신한다.
+최근 실험 결과를 요약하여 results/{latest_timestamp}/report/latest.md를 갱신한다.
 hooks의 Stop 이벤트 또는 experiment-runner 완료 후 자동 실행.
 """
 import argparse
 import json
 from datetime import datetime
 from pathlib import Path
+
+
+def _find_latest_timestamp() -> str | None:
+    import re
+    results_dir = Path("results")
+    if not results_dir.exists():
+        return None
+    dirs = sorted(
+        [d.name for d in results_dir.iterdir()
+         if d.is_dir() and re.match(r"\d{8}_\d{6}", d.name)],
+        reverse=True,
+    )
+    return dirs[0] if dirs else None
 
 
 def load_registry() -> list:
@@ -82,8 +95,8 @@ _Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_
             for k, v in metrics_data["secondary_metrics"].items():
                 report += f"- **{k}**: {v}\n"
 
-    report += "\n\n---\n_See `results/reports/error_analysis.md` for failure analysis._\n"
-    report += "_See `results/reports/next_actions.md` for next steps._\n"
+    report += "\n\n---\n_See `results/{timestamp}/report/error_analysis.md` for failure analysis._\n"
+    report += "_See `results/{timestamp}/report/next_actions.md` for next steps._\n"
 
     return report
 
@@ -101,7 +114,12 @@ def main():
 
     report = generate_report(runs)
 
-    output_path = Path("results/reports/latest.md")
+    # Save to latest timestamp directory
+    latest_ts = _find_latest_timestamp()
+    if latest_ts:
+        output_path = Path(f"results/{latest_ts}/report/latest.md")
+    else:
+        output_path = Path("results/latest.md")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report)
 
